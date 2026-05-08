@@ -79,6 +79,16 @@ class Contract(PrimaryModel):
     description = models.CharField(max_length=200, blank=True)
     comments = models.TextField(blank=True)
 
+    # Required by Nautobot's natural_slug / natural_key machinery (used by
+    # detail views, REST API URL stability, and import/export matching).
+    # Neither `name` nor `contract_number` is unique on its own (yearly
+    # renewals reuse names; numbers are vendor-supplied and may collide
+    # across providers), so we declare the (provider, name) pair as the
+    # natural key — without imposing a DB-level UniqueConstraint that
+    # would block legitimate duplicates. This is a Nautobot-level attribute,
+    # NOT a Django Meta attribute (Django's Meta rejects unknown keys).
+    natural_key_field_names = ["name", "provider"]
+
     class Meta:
         """Model metadata."""
 

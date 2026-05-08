@@ -21,7 +21,14 @@ from unittest.mock import MagicMock
 _FAKE_MODULES = [
     "nautobot",
     "nautobot.apps",
+    "nautobot.apps.api",
+    "nautobot.apps.filters",
+    "nautobot.apps.forms",
     "nautobot.apps.jobs",
+    "nautobot.apps.tables",
+    "nautobot.apps.ui",
+    "nautobot.apps.urls",
+    "nautobot.apps.views",
     "nautobot.core",
     "nautobot.core.models",
     "nautobot.core.models.generics",
@@ -46,6 +53,7 @@ _FAKE_MODULES = [
     "django.contrib.contenttypes.models",
     "django.db",
     "django.db.models",
+    "django_tables2",
 ]
 
 for name in _FAKE_MODULES:
