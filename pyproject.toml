@@ -1,0 +1,80 @@
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[project]
+name = "nautobot-contract-models"
+version = "2026.5.8"
+description = "First-class Contract, Invoice, and ServiceProvider models for Nautobot."
+readme = "README.md"
+requires-python = ">=3.10"
+authors = [{ name = "Ryan Malloy", email = "ryan@supported.systems" }]
+keywords = ["nautobot", "nautobot-app", "nautobot-plugin", "contracts", "invoices", "renewals"]
+classifiers = [
+    "Development Status :: 3 - Alpha",
+    "Intended Audience :: System Administrators",
+    "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3.10",
+    "Programming Language :: Python :: 3.11",
+    "Programming Language :: Python :: 3.12",
+    "Programming Language :: Python :: 3.13",
+    "Framework :: Django",
+]
+dependencies = [
+    "nautobot>=3.0,<4",
+]
+
+[project.optional-dependencies]
+dev = [
+    "pytest>=8.0",
+    "ruff>=0.6",
+]
+
+[project.urls]
+Homepage = "https://github.com/rsp/nautobot-contract-models"
+
+[tool.hatch.build.targets.wheel]
+packages = ["src/nautobot_contract_models"]
+
+[tool.hatch.build.targets.sdist]
+exclude = [
+    "CLAUDE.md",
+    "INITIAL_PROMPT.md",
+    "PLAN.md",
+    ".env",
+    ".env.local",
+    ".mcp.json",
+    "/local/",
+    ".pytest_cache/",
+    ".ruff_cache/",
+    "dist/",
+    "build/",
+    "development/",
+    "tests/",
+]
+
+[tool.ruff]
+line-length = 120
+target-version = "py310"
+
+[tool.ruff.lint]
+select = [
+    "E",    # pycodestyle errors
+    "W",    # pycodestyle warnings
+    "F",    # pyflakes
+    "I",    # isort
+    "B",    # flake8-bugbear
+    "UP",   # pyupgrade
+    "D",    # pydocstyle
+]
+ignore = [
+    "D203",  # one-blank-line-before-class (conflicts with D211)
+    "D213",  # multi-line-summary-second-line (conflicts with D212)
+]
+
+[tool.ruff.lint.per-file-ignores]
+"tests/*" = ["D"]
+"src/nautobot_contract_models/migrations/*" = ["D"]
+
+[tool.ruff.lint.pydocstyle]
+convention = "google"
