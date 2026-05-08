@@ -17,6 +17,7 @@ from nautobot.apps.api import OrderedDefaultRouter
 from nautobot_contract_models.views import (
     ContractAssignmentUIViewSet,
     ContractUIViewSet,
+    InvoiceAttachmentUIViewSet,
     InvoiceUIViewSet,
     ServiceProviderUIViewSet,
 )
@@ -25,6 +26,7 @@ router = OrderedDefaultRouter()
 router.register("service-providers", ServiceProviderUIViewSet)
 router.register("contracts", ContractUIViewSet)
 router.register("invoices", InvoiceUIViewSet)
+router.register("invoice-attachments", InvoiceAttachmentUIViewSet)
 router.register("contract-assignments", ContractAssignmentUIViewSet)
 
 app_name = "nautobot_contract_models-api"

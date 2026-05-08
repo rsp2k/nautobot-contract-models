@@ -2,13 +2,13 @@
 
 from nautobot.apps.views import NautobotUIViewSet
 from nautobot.core.ui.choices import SectionChoices
-from nautobot.core.ui.object_detail import ObjectDetailContent, ObjectFieldsPanel
+from nautobot.core.ui.object_detail import ObjectDetailContent, ObjectFieldsPanel, ObjectsTablePanel
 
 from nautobot_contract_models.api.serializers import InvoiceSerializer
 from nautobot_contract_models.filters import InvoiceFilterSet
 from nautobot_contract_models.forms import InvoiceBulkEditForm, InvoiceFilterForm, InvoiceForm
 from nautobot_contract_models.models import Invoice
-from nautobot_contract_models.tables import InvoiceTable
+from nautobot_contract_models.tables import InvoiceAttachmentTable, InvoiceTable
 
 
 class InvoiceUIViewSet(NautobotUIViewSet):
@@ -28,6 +28,14 @@ class InvoiceUIViewSet(NautobotUIViewSet):
                 section=SectionChoices.LEFT_HALF,
                 weight=100,
                 fields="__all__",
+            ),
+            ObjectsTablePanel(
+                section=SectionChoices.FULL_WIDTH,
+                weight=200,
+                label="Attachments",
+                table_class=InvoiceAttachmentTable,
+                table_filter="invoice",
+                exclude_columns=["invoice"],
             ),
         ),
     )

@@ -10,6 +10,7 @@ Public model surface:
 """
 
 from .assignment import ContractAssignment
+from .attachment import InvoiceAttachment
 from .contract import Contract
 from .invoice import Invoice
 from .provider import ServiceProvider
@@ -18,5 +19,6 @@ __all__ = [
     "Contract",
     "ContractAssignment",
     "Invoice",
+    "InvoiceAttachment",
     "ServiceProvider",
 ]
