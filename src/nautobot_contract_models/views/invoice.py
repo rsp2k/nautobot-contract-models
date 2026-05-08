@@ -1,6 +1,8 @@
 """UI viewset for :class:`Invoice`."""
 
 from nautobot.apps.views import NautobotUIViewSet
+from nautobot.core.ui.choices import SectionChoices
+from nautobot.core.ui.object_detail import ObjectDetailContent, ObjectFieldsPanel
 
 from nautobot_contract_models.api.serializers import InvoiceSerializer
 from nautobot_contract_models.filters import InvoiceFilterSet
@@ -19,3 +21,13 @@ class InvoiceUIViewSet(NautobotUIViewSet):
     queryset = Invoice.objects.select_related("contract", "status")
     serializer_class = InvoiceSerializer
     table_class = InvoiceTable
+
+    object_detail_content = ObjectDetailContent(
+        panels=(
+            ObjectFieldsPanel(
+                section=SectionChoices.LEFT_HALF,
+                weight=100,
+                fields="__all__",
+            ),
+        ),
+    )

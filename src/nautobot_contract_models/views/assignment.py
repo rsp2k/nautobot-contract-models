@@ -1,6 +1,8 @@
 """UI viewset for :class:`ContractAssignment`."""
 
 from nautobot.apps.views import NautobotUIViewSet
+from nautobot.core.ui.choices import SectionChoices
+from nautobot.core.ui.object_detail import ObjectDetailContent, ObjectFieldsPanel
 
 from nautobot_contract_models.api.serializers import ContractAssignmentSerializer
 from nautobot_contract_models.filters import ContractAssignmentFilterSet
@@ -26,3 +28,13 @@ class ContractAssignmentUIViewSet(NautobotUIViewSet):
     # Default action_buttons include "import" which doesn't make sense for an
     # assignment row (you can't paste in a CSV of UUIDs to bulk-link). Drop it.
     action_buttons = ("add",)
+
+    object_detail_content = ObjectDetailContent(
+        panels=(
+            ObjectFieldsPanel(
+                section=SectionChoices.LEFT_HALF,
+                weight=100,
+                fields="__all__",
+            ),
+        ),
+    )

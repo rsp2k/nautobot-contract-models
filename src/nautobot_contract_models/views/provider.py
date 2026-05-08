@@ -1,6 +1,8 @@
 """UI viewset for :class:`ServiceProvider`."""
 
 from nautobot.apps.views import NautobotUIViewSet
+from nautobot.core.ui.choices import SectionChoices
+from nautobot.core.ui.object_detail import ObjectDetailContent, ObjectFieldsPanel, ObjectsTablePanel
 
 from nautobot_contract_models.api.serializers import ServiceProviderSerializer
 from nautobot_contract_models.filters import ServiceProviderFilterSet
@@ -10,7 +12,7 @@ from nautobot_contract_models.forms import (
     ServiceProviderForm,
 )
 from nautobot_contract_models.models import ServiceProvider
-from nautobot_contract_models.tables import ServiceProviderTable
+from nautobot_contract_models.tables import ContractTable, ServiceProviderTable
 
 
 class ServiceProviderUIViewSet(NautobotUIViewSet):
@@ -23,3 +25,21 @@ class ServiceProviderUIViewSet(NautobotUIViewSet):
     queryset = ServiceProvider.objects.all()
     serializer_class = ServiceProviderSerializer
     table_class = ServiceProviderTable
+
+    object_detail_content = ObjectDetailContent(
+        panels=(
+            ObjectFieldsPanel(
+                section=SectionChoices.LEFT_HALF,
+                weight=100,
+                fields="__all__",
+            ),
+            ObjectsTablePanel(
+                section=SectionChoices.FULL_WIDTH,
+                weight=200,
+                label="Contracts",
+                table_class=ContractTable,
+                table_filter="provider",
+                exclude_columns=["provider"],
+            ),
+        ),
+    )
