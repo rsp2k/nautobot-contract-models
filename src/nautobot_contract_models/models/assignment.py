@@ -3,10 +3,10 @@
 from django.contrib.contenttypes.fields import GenericForeignKey
 from django.contrib.contenttypes.models import ContentType
 from django.db import models
-from nautobot.core.models.generics import BaseModel
+from nautobot.core.models.generics import PrimaryModel
 
 
-class ContractAssignment(BaseModel):
+class ContractAssignment(PrimaryModel):
     """Link a :class:`Contract` to *any* Nautobot object that has a UUID PK.
 
     Why generic FK rather than a typed M2M?
@@ -16,10 +16,17 @@ class ContractAssignment(BaseModel):
         us that. Operators can attach a Contract to anything in the Nautobot
         ORM — we don't have to enumerate the supported targets up front.
 
-    Subclasses :class:`BaseModel` (not :class:`PrimaryModel`) on purpose: an
-    assignment row is a *link*, not a primary record. It doesn't get its own
-    changelog entries — changes to the assignment are reflected as changelog
-    entries on the contract and the target object instead.
+    Subclasses :class:`PrimaryModel` (matching Nautobot's own
+    :class:`ContactAssociation`, which is the canonical GFK-link model). The
+    full PrimaryModel surface — ChangeLog, custom fields, tags, Relationships,
+    dynamic groups — applies. ChangeLog in particular matters: operators want
+    to see "who linked this Contract to that Device, and when".
+
+    Phase-2's earlier choice of ``BaseModel`` was wrong for this reason:
+    ``NautobotModelForm`` expects ``RelationshipModelMixin`` on the model
+    (which BaseModel doesn't include), so the create form 500s on
+    ``instance.get_relationships()``. Promoting to PrimaryModel fixes the
+    immediate bug AND aligns with how Nautobot itself models GFK links.
     """
 
     contract = models.ForeignKey(

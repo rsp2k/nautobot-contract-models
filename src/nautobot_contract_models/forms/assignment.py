@@ -27,7 +27,7 @@ class ContractAssignmentForm(NautobotModelForm):
         """Meta."""
 
         model = ContractAssignment
-        fields = ["contract", "content_type", "object_id"]
+        fields = ["contract", "content_type", "object_id", "tags"]
 
 
 class ContractAssignmentFilterForm(NautobotFilterForm):
