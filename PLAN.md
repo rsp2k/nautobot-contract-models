@@ -47,7 +47,7 @@ Goal: package builds, dev stack boots, plugin registers as a Nautobot App.
 - README with mapping table placeholder
 - First commit: "Initial scaffold"
 
-**Acceptance:** `make build && make up` boots a Nautobot dev instance, `nautobot-server shell -c "import nautobot_contract_models"` succeeds, plugin appears in Nautobot's `/apps/installed-plugins/` listing.
+**Acceptance:** `make build && make up` boots a Nautobot dev instance, `nautobot-server shell -c "import nautobot_contract_models"` succeeds, plugin appears in Nautobot's `/apps/installed-apps/` listing.
 
 ### Phase 2 — Core models + migration (1 session)
 

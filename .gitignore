@@ -43,3 +43,6 @@ uv.lock
 /local/
 nautobot.db
 media/
+
+# Browser-walkthrough screenshots and other dev artifacts (not source).
+artifacts/
