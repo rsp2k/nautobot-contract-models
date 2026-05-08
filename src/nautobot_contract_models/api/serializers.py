@@ -12,6 +12,7 @@ from nautobot.apps.api import NautobotModelSerializer
 from nautobot_contract_models.models import (
     Contract,
     ContractAssignment,
+    ContractAttachment,
     Invoice,
     InvoiceAttachment,
     ServiceProvider,
@@ -71,4 +72,14 @@ class InvoiceAttachmentSerializer(NautobotModelSerializer):
         """Meta."""
 
         model = InvoiceAttachment
+        fields = "__all__"
+
+
+class ContractAttachmentSerializer(NautobotModelSerializer):
+    """Serializer for :class:`ContractAttachment`."""
+
+    class Meta:
+        """Meta."""
+
+        model = ContractAttachment
         fields = "__all__"

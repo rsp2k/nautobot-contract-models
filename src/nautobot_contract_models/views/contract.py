@@ -8,7 +8,12 @@ from nautobot_contract_models.api.serializers import ContractSerializer
 from nautobot_contract_models.filters import ContractFilterSet
 from nautobot_contract_models.forms import ContractBulkEditForm, ContractFilterForm, ContractForm
 from nautobot_contract_models.models import Contract
-from nautobot_contract_models.tables import ContractAssignmentTable, ContractTable, InvoiceTable
+from nautobot_contract_models.tables import (
+    ContractAssignmentTable,
+    ContractAttachmentTable,
+    ContractTable,
+    InvoiceTable,
+)
 
 
 class ContractUIViewSet(NautobotUIViewSet):
@@ -42,6 +47,14 @@ class ContractUIViewSet(NautobotUIViewSet):
                 weight=300,
                 label="Coverage (Contract Assignments)",
                 table_class=ContractAssignmentTable,
+                table_filter="contract",
+                exclude_columns=["contract"],
+            ),
+            ObjectsTablePanel(
+                section=SectionChoices.FULL_WIDTH,
+                weight=400,
+                label="Attachments",
+                table_class=ContractAttachmentTable,
                 table_filter="contract",
                 exclude_columns=["contract"],
             ),

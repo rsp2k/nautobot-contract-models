@@ -1,7 +1,12 @@
 """Forms for create/edit/filter/bulk-edit views."""
 
 from .assignment import ContractAssignmentFilterForm, ContractAssignmentForm
-from .attachment import InvoiceAttachmentFilterForm, InvoiceAttachmentForm
+from .attachment import (
+    ContractAttachmentFilterForm,
+    ContractAttachmentForm,
+    InvoiceAttachmentFilterForm,
+    InvoiceAttachmentForm,
+)
 from .contract import ContractBulkEditForm, ContractFilterForm, ContractForm
 from .invoice import InvoiceBulkEditForm, InvoiceFilterForm, InvoiceForm
 from .provider import ServiceProviderBulkEditForm, ServiceProviderFilterForm, ServiceProviderForm
@@ -9,6 +14,8 @@ from .provider import ServiceProviderBulkEditForm, ServiceProviderFilterForm, Se
 __all__ = [
     "ContractAssignmentFilterForm",
     "ContractAssignmentForm",
+    "ContractAttachmentFilterForm",
+    "ContractAttachmentForm",
     "ContractBulkEditForm",
     "ContractFilterForm",
     "ContractForm",

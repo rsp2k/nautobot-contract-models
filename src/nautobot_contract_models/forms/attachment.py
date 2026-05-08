@@ -1,4 +1,4 @@
-"""Forms for :class:`InvoiceAttachment`."""
+"""Forms for :class:`InvoiceAttachment` and :class:`ContractAttachment`."""
 
 from django import forms
 from nautobot.apps.forms import (
@@ -8,7 +8,12 @@ from nautobot.apps.forms import (
     NautobotModelForm,
 )
 
-from nautobot_contract_models.models import Invoice, InvoiceAttachment
+from nautobot_contract_models.models import (
+    Contract,
+    ContractAttachment,
+    Invoice,
+    InvoiceAttachment,
+)
 
 
 class InvoiceAttachmentForm(NautobotModelForm):
@@ -29,3 +34,23 @@ class InvoiceAttachmentFilterForm(NautobotFilterForm):
     model = InvoiceAttachment
     q = forms.CharField(required=False, label="Search")
     invoice = DynamicModelMultipleChoiceField(queryset=Invoice.objects.all(), required=False)
+
+
+class ContractAttachmentForm(NautobotModelForm):
+    """Create / edit form. The ``file`` field renders as a native file picker."""
+
+    contract = DynamicModelChoiceField(queryset=Contract.objects.all())
+
+    class Meta:
+        """Meta."""
+
+        model = ContractAttachment
+        fields = ["contract", "file", "description", "tags"]
+
+
+class ContractAttachmentFilterForm(NautobotFilterForm):
+    """Filter form (sidebar on the list view)."""
+
+    model = ContractAttachment
+    q = forms.CharField(required=False, label="Search")
+    contract = DynamicModelMultipleChoiceField(queryset=Contract.objects.all(), required=False)

@@ -1,4 +1,11 @@
-"""InvoiceAttachment — a file attached to an Invoice (typically a PDF)."""
+"""Attachment models — files attached to Invoices and Contracts (typically PDFs).
+
+Two near-identical sibling models, one per parent type. Splitting (rather than
+one generic GFK Attachment) follows netbox-contract's convention and keeps
+retention / access-control reasoning per-parent simple. If a third type ever
+needs attachments, copy-paste the pattern; if four or more accumulate, that's
+the trigger to refactor to a generic GFK model.
+"""
 
 import os
 
@@ -6,34 +13,15 @@ from django.db import models
 from nautobot.core.models.generics import PrimaryModel
 
 
-class InvoiceAttachment(PrimaryModel):
-    """A single file uploaded against an :class:`Invoice`.
+class _AttachmentBase(PrimaryModel):
+    """Shared file/description fields and helpers for the attachment models.
 
-    The motivating use case: vendors send invoices as PDFs. Operators want to
-    attach the actual PDF to the database row so future-them (or auditors)
-    can see what the original looked like, not just the typed-in numbers.
-
-    Files are stored under Nautobot's ``MEDIA_ROOT`` at
-    ``invoice_attachments/YYYY/MM/<filename>`` and served at
-    ``/media/invoice_attachments/...``. Nautobot's stack already volume-mounts
-    ``/opt/nautobot/media/`` for persistence and exposes ``/media/`` via the
-    web container — no extra configuration required.
-
-    v1 keeps the model intentionally focused: attachments belong to *invoices*
-    only. If operators later want to attach signed-contract PDFs or vendor
-    quotes to Contracts, the cleanest path is a sibling ``ContractAttachment``
-    model rather than a generic GFK — separate concerns, separate access
-    controls, separate retention policies.
+    Abstract — subclasses add the actual parent FK. The shared fields and
+    helpers keep the table layout and the per-cell rendering identical
+    across the two attachment types so operators see consistent UX.
     """
 
-    invoice = models.ForeignKey(
-        to="nautobot_contract_models.Invoice",
-        on_delete=models.CASCADE,
-        related_name="attachments",
-        help_text="Owning invoice. CASCADE — attachments can't outlive their invoice.",
-    )
     file = models.FileField(
-        upload_to="invoice_attachments/%Y/%m/",
         help_text="The uploaded file. Typically a PDF, but any file type is allowed.",
     )
     description = models.CharField(
@@ -42,16 +30,11 @@ class InvoiceAttachment(PrimaryModel):
         help_text="Optional human-readable label (e.g. 'original vendor PDF', 'wire confirmation').",
     )
 
-    natural_key_field_names = ["invoice", "file"]
-
     class Meta:
-        """Model metadata."""
+        """Abstract — concrete subclasses inherit field config + Meta defaults."""
 
+        abstract = True
         ordering = ["-created", "file"]
-
-    def __str__(self):
-        """Render as the basename of the file plus the invoice number."""
-        return f"{self.filename} ({self.invoice.invoice_number})"
 
     @property
     def filename(self):
@@ -65,3 +48,75 @@ class InvoiceAttachment(PrimaryModel):
             return self.file.size
         except (FileNotFoundError, ValueError, OSError):
             return None
+
+
+class InvoiceAttachment(_AttachmentBase):
+    """A single file uploaded against an :class:`Invoice`.
+
+    The motivating use case: vendors send invoices as PDFs. Operators want to
+    attach the actual PDF to the database row so future-them (or auditors)
+    can see what the original looked like, not just the typed-in numbers.
+
+    Files land at ``invoice_attachments/YYYY/MM/<filename>`` under Nautobot's
+    ``MEDIA_ROOT`` and serve at ``/media/invoice_attachments/...``. The
+    ``nautobot-media`` Docker volume persists them across restarts; production
+    deployments need a separate backup strategy for that volume since DB
+    dumps don't include media files.
+    """
+
+    invoice = models.ForeignKey(
+        to="nautobot_contract_models.Invoice",
+        on_delete=models.CASCADE,
+        related_name="attachments",
+        help_text="Owning invoice. CASCADE — attachments can't outlive their invoice.",
+    )
+    file = models.FileField(
+        upload_to="invoice_attachments/%Y/%m/",
+        help_text="The uploaded file. Typically a PDF, but any file type is allowed.",
+    )
+
+    natural_key_field_names = ["invoice", "file"]
+
+    class Meta(_AttachmentBase.Meta):
+        """Concrete metadata."""
+
+        abstract = False
+
+    def __str__(self):
+        """Render as ``<filename> (<invoice_number>)``."""
+        return f"{self.filename} ({self.invoice.invoice_number})"
+
+
+class ContractAttachment(_AttachmentBase):
+    """A single file uploaded against a :class:`Contract`.
+
+    Common contents: the signed contract PDF itself, vendor SOWs / proposals,
+    renewal-letter scans, addenda. Operators usually upload one or two and
+    reference them rarely — the typical access pattern is "I need to see the
+    actual signed agreement".
+
+    Files land at ``contract_attachments/YYYY/MM/<filename>``. Same volume,
+    same backup discipline as :class:`InvoiceAttachment`.
+    """
+
+    contract = models.ForeignKey(
+        to="nautobot_contract_models.Contract",
+        on_delete=models.CASCADE,
+        related_name="attachments",
+        help_text="Owning contract. CASCADE — attachments can't outlive their contract.",
+    )
+    file = models.FileField(
+        upload_to="contract_attachments/%Y/%m/",
+        help_text="The uploaded file. Typically a PDF, but any file type is allowed.",
+    )
+
+    natural_key_field_names = ["contract", "file"]
+
+    class Meta(_AttachmentBase.Meta):
+        """Concrete metadata."""
+
+        abstract = False
+
+    def __str__(self):
+        """Render as ``<filename> (<contract_name>)``."""
+        return f"{self.filename} ({self.contract.name})"

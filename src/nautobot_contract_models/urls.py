@@ -12,6 +12,7 @@ from nautobot.apps.urls import NautobotUIViewSetRouter
 
 from nautobot_contract_models.views import (
     ContractAssignmentUIViewSet,
+    ContractAttachmentUIViewSet,
     ContractUIViewSet,
     InvoiceAttachmentUIViewSet,
     InvoiceUIViewSet,
@@ -21,6 +22,7 @@ from nautobot_contract_models.views import (
 router = NautobotUIViewSetRouter()
 router.register("service-providers", ServiceProviderUIViewSet)
 router.register("contracts", ContractUIViewSet)
+router.register("contract-attachments", ContractAttachmentUIViewSet)
 router.register("invoices", InvoiceUIViewSet)
 router.register("invoice-attachments", InvoiceAttachmentUIViewSet)
 router.register("contract-assignments", ContractAssignmentUIViewSet)
