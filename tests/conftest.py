@@ -32,6 +32,8 @@ _FAKE_MODULES = [
     "nautobot.extras",
     "nautobot.extras.choices",
     "nautobot.extras.models",
+    "nautobot.extras.models.statuses",
+    "nautobot.extras.utils",
     "nautobot.tenancy",
     "nautobot.tenancy.models",
     "django",

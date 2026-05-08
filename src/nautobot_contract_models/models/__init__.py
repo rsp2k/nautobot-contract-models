@@ -1,6 +1,22 @@
 """Django ORM models for the contract-models plugin.
 
-Phase 2 lands the real model classes (ServiceProvider, Contract, Invoice,
-ContractAssignment). Until then this package is intentionally empty so the
-plugin registers cleanly with no migrations.
+Public model surface:
+
+- :class:`ServiceProvider` — the vendor / counterparty
+- :class:`Contract` — the master agreement
+- :class:`Invoice` — one billing line on a contract
+- :class:`ContractAssignment` — generic-FK link between a Contract and any
+  Nautobot object (Device, Circuit, VirtualMachine, …)
 """
+
+from .assignment import ContractAssignment
+from .contract import Contract
+from .invoice import Invoice
+from .provider import ServiceProvider
+
+__all__ = [
+    "Contract",
+    "ContractAssignment",
+    "Invoice",
+    "ServiceProvider",
+]
