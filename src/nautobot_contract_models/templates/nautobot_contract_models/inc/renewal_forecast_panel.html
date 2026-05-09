@@ -30,6 +30,11 @@ Context variables:
             No upcoming renewals.
         </div>
     {% endif %}
+    <div class="list-group-item text-end">
+        <a href="{% url 'plugins:nautobot_contract_models:contract_renewal_calendar' %}">
+            View renewal calendar →
+        </a>
+    </div>
 {% else %}
     <div class="card-body text-secondary">
         <span class="mdi mdi-lock" aria-hidden="true"></span> No permission

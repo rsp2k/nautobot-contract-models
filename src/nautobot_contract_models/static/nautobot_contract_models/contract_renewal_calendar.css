@@ -123,11 +123,33 @@
     opacity: 0.7;
 }
 
-/* Current month: amber underline on the column header AND a subtle
- * border on every cell in that column. Provides anchoring without
- * stealing attention from the data. */
+/* Current month — make it impossible to miss.
+ *
+ * Two redundant signals: (a) a thick amber underline that overrides
+ * the default gray border-bottom (one declaration, no shadow/border
+ * fight), and (b) a textual "Now" badge inserted via ::after. The
+ * badge text is what makes this work for color-blind users and for
+ * any rendering edge case where the underline is suppressed (printer,
+ * forced-colors mode, narrow viewport zoom).
+ */
 .cal-month-head.cal-month-current {
-    box-shadow: inset 0 -3px 0 0 hsl(var(--cal-amber-h), 90%, 50%);
+    border-bottom: 4px solid hsl(var(--cal-amber-h), 90%, 50%);
+    background: var(--bs-tertiary-bg, #f8f9fa);
+}
+
+.cal-month-head.cal-month-current .cal-month-label::after {
+    content: "Now";
+    display: inline-block;
+    margin-left: 0.4rem;
+    padding: 0.05rem 0.4rem;
+    font-size: 0.65rem;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+    color: #fff;
+    background: hsl(var(--cal-amber-h), 90%, 45%);
+    border-radius: 999px;
+    vertical-align: middle;
 }
 
 .cal-cell {
@@ -199,10 +221,12 @@
     font-size: 0.875rem;
 }
 
-/* Subtle ring around the current-month column on data cells too */
+/* Vertical amber rails on data cells in the current column. Theme-agnostic
+ * (works in light AND dark mode); subtle enough not to fight the
+ * saturation scale on the cell itself. */
 .cal-cell-current {
-    box-shadow: inset 1px 0 0 0 rgba(0, 0, 0, 0.05),
-                inset -1px 0 0 0 rgba(0, 0, 0, 0.05);
+    box-shadow: inset 2px 0 0 0 hsl(var(--cal-amber-h), 90%, 50%),
+                inset -2px 0 0 0 hsl(var(--cal-amber-h), 90%, 50%);
 }
 
 /* Legend ---------------------------------------------------- */

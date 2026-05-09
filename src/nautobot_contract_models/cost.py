@@ -152,11 +152,14 @@ def spend_by_vendor(*, on_date=None, limit=10):
 def renewal_calendar(months=12, *, on_date=None):
     """Forward-looking month-by-month renewal cost grid.
 
-    Returns a list of ``{year, month, label, totals, contract_count}``
-    dicts in chronological order, where ``totals`` is a per-currency
-    ``dict[currency_code, Decimal]``. The list always has exactly
-    ``months`` entries — empty months appear with ``totals={}`` and
-    ``contract_count=0`` so the calendar grid stays rectangular.
+    Returns a list of ``{year, month, label, totals, contract_count, contracts_by_currency}``
+    dicts in chronological order. ``totals`` is a per-currency
+    ``dict[currency_code, Decimal]``; ``contracts_by_currency`` maps the
+    same currency keys to a list of contract names — useful for hover
+    tooltips so operators can see WHICH contracts contribute to a
+    saturated cell. The list always has exactly ``months`` entries —
+    empty months appear with ``totals={}`` and ``contract_count=0`` so
+    the calendar grid stays rectangular.
 
     Used by the Renewal Calendar view to render a heat-map-style
     breakdown ("which month is the renewal cliff?"). Operators click a
@@ -175,8 +178,12 @@ def renewal_calendar(months=12, *, on_date=None):
     end_year, end_month = _add_months(grid_start.year, grid_start.month, months)
     grid_end_exclusive = date(end_year, end_month, 1)
 
+    # ``name`` is now in the .only() list because we expose contract names
+    # for hover tooltips. Tradeoff: a few extra bytes per row, but the
+    # query is still one round-trip and contract-count-per-month is in
+    # the dozens at most.
     qs = Contract.objects.filter(end_date__gte=grid_start, end_date__lt=grid_end_exclusive).only(
-        "recurring_cost", "one_time_cost", "billing_period", "term_months", "currency", "end_date"
+        "name", "recurring_cost", "one_time_cost", "billing_period", "term_months", "currency", "end_date"
     )
 
     # Bucket contracts into (year, month) → list of contracts.
@@ -190,14 +197,17 @@ def renewal_calendar(months=12, *, on_date=None):
     for _ in range(months):
         contracts = buckets.get((year, month), [])
         totals = defaultdict(lambda: ZERO)
+        contracts_by_currency = defaultdict(list)
         for contract in contracts:
             totals[contract.currency] += total_contract_value(contract)
+            contracts_by_currency[contract.currency].append(contract.name)
         result.append(
             {
                 "year": year,
                 "month": month,
                 "label": _MONTH_LABELS[month - 1],
                 "totals": dict(totals),
+                "contracts_by_currency": dict(contracts_by_currency),
                 "contract_count": len(contracts),
             }
         )

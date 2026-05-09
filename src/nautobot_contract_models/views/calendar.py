@@ -67,6 +67,7 @@ class ContractRenewalCalendarView(PermissionRequiredMixin, TemplateView):
             ceiling = max_by_currency.get(currency, ZERO)
             for cell in grid:
                 total = cell["totals"].get(currency, ZERO)
+                contract_names = cell.get("contracts_by_currency", {}).get(currency, [])
                 saturation = int((total / ceiling) * 100) if (ceiling > 0 and total > 0) else 0
                 cells.append(
                     {
@@ -76,6 +77,12 @@ class ContractRenewalCalendarView(PermissionRequiredMixin, TemplateView):
                         "total": total,
                         "saturation": saturation,
                         "contract_count": cell["contract_count"],
+                        "contract_names": contract_names,
+                        # Newline-joined name list for the cell's title=""
+                        # tooltip. Newlines render as line-breaks in browser
+                        # tooltips for most engines, falling back gracefully
+                        # to a space-separated list if not.
+                        "tooltip": "\n".join(contract_names),
                         "is_current": cell["year"] == date.today().year and cell["month"] == date.today().month,
                     }
                 )

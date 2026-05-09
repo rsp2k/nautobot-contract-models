@@ -76,6 +76,7 @@ Context (from views/calendar.py):
                                     <td class="cal-cell cal-cell-filled{% if cell.is_current %} cal-cell-current{% endif %}" style="--cal-saturation: {{ cell.saturation }};">
                                         <a class="cal-cell-link"
                                            href="{% url 'plugins:nautobot_contract_models:contract_list' %}?end_date__year={{ cell.year }}&end_date__month={{ cell.month }}&currency={{ row.currency }}"
+                                           title="{{ cell.tooltip }}"
                                            aria-label="{{ cell.label }} {{ cell.year }}: {{ cell.total|floatformat:0 }} {{ row.currency }}, {{ cell.contract_count }} contract{{ cell.contract_count|pluralize }} renewing">
                                             <span class="cal-cell-value">{{ cell.total|floatformat:0 }}</span>
                                             <span class="cal-cell-count">{{ cell.contract_count }}</span>

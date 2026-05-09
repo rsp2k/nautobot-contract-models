@@ -160,3 +160,20 @@ class RenewalCalendarTests(TestCase):
         # At minimum the current month's label is one of the standard 3-letter abbrevs.
         valid_labels = {"Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"}
         self.assertIn(labels[date.today().month], valid_labels)
+
+    def test_contracts_by_currency_returns_names(self):
+        # Phase 10 polish: cells must expose a per-currency list of contract
+        # names so the template can render hover tooltips.
+        target = _date_in_n_months(2)
+        make_contract(
+            name="renaming-test",
+            recurring_cost=Decimal("100"),
+            billing_period="monthly",
+            term_months=12,
+            start_date=target.replace(year=target.year - 1),
+            end_date=target,
+        )
+
+        grid = cost.renewal_calendar(months=6)
+        cell = next(c for c in grid if c["year"] == target.year and c["month"] == target.month)
+        self.assertEqual(cell["contracts_by_currency"]["USD"], ["renaming-test"])
