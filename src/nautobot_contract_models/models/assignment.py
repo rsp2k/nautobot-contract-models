@@ -4,8 +4,18 @@ from django.contrib.contenttypes.fields import GenericForeignKey
 from django.contrib.contenttypes.models import ContentType
 from django.db import models
 from nautobot.core.models.generics import PrimaryModel
+from nautobot.extras.utils import extras_features
 
 
+@extras_features(
+    "custom_fields",
+    "custom_links",
+    "custom_validators",
+    "export_templates",
+    "graphql",
+    "relationships",
+    "webhooks",
+)
 class ContractAssignment(PrimaryModel):
     """Link a :class:`Contract` to *any* Nautobot object that has a UUID PK.
 

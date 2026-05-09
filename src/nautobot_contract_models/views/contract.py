@@ -1,13 +1,14 @@
 """UI viewset for :class:`Contract`."""
 
 from nautobot.apps.views import NautobotUIViewSet
+from nautobot.core.models.querysets import count_related
 from nautobot.core.ui.choices import SectionChoices
 from nautobot.core.ui.object_detail import ObjectDetailContent, ObjectFieldsPanel, ObjectsTablePanel
 
 from nautobot_contract_models.api.serializers import ContractSerializer
 from nautobot_contract_models.filters import ContractFilterSet
 from nautobot_contract_models.forms import ContractBulkEditForm, ContractFilterForm, ContractForm
-from nautobot_contract_models.models import Contract
+from nautobot_contract_models.models import Contract, ContractAssignment, ContractAttachment, Invoice
 from nautobot_contract_models.tables import (
     ContractAssignmentTable,
     ContractAttachmentTable,
@@ -23,7 +24,11 @@ class ContractUIViewSet(NautobotUIViewSet):
     filterset_class = ContractFilterSet
     filterset_form_class = ContractFilterForm
     form_class = ContractForm
-    queryset = Contract.objects.select_related("provider", "tenant", "status")
+    queryset = Contract.objects.select_related("provider", "tenant", "status").annotate(
+        invoice_count=count_related(Invoice, "contract"),
+        assignment_count=count_related(ContractAssignment, "contract"),
+        attachment_count=count_related(ContractAttachment, "contract"),
+    )
     serializer_class = ContractSerializer
     table_class = ContractTable
 

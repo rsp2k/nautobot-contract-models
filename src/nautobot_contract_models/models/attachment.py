@@ -11,6 +11,17 @@ import os
 
 from django.db import models
 from nautobot.core.models.generics import PrimaryModel
+from nautobot.extras.utils import extras_features
+
+_ATTACHMENT_EXTRAS = (
+    "custom_fields",
+    "custom_links",
+    "custom_validators",
+    "export_templates",
+    "graphql",
+    "relationships",
+    "webhooks",
+)
 
 
 class _AttachmentBase(PrimaryModel):
@@ -50,6 +61,7 @@ class _AttachmentBase(PrimaryModel):
             return None
 
 
+@extras_features(*_ATTACHMENT_EXTRAS)
 class InvoiceAttachment(_AttachmentBase):
     """A single file uploaded against an :class:`Invoice`.
 
@@ -87,6 +99,7 @@ class InvoiceAttachment(_AttachmentBase):
         return f"{self.filename} ({self.invoice.invoice_number})"
 
 
+@extras_features(*_ATTACHMENT_EXTRAS)
 class ContractAttachment(_AttachmentBase):
     """A single file uploaded against a :class:`Contract`.
 

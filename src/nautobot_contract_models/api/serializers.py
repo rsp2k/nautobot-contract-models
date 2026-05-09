@@ -1,13 +1,21 @@
 """DRF serializers for the contract-models plugin.
 
-Phase 3 needs these only because :class:`NautobotUIViewSet` requires a
-``serializer_class`` to instantiate. They're minimal — Phase 4 (REST API)
-adds nested-relationship handling, custom validation, and richer field
-shaping. For now ``fields = "__all__"`` produces a working JSON
-representation that the UI views can lean on.
+Each serializer mixes :class:`TaggedModelSerializerMixin` so the ``tags``
+field renders as a flat list of tag names rather than the M2M-URL noise the
+default ``ModelSerializer`` produces. Parent-side serializers expose
+read-only count annotations (``contract_count``, ``invoice_count``, etc.)
+for at-a-glance API dashboards — populated by the corresponding viewset's
+queryset annotation.
+
+Nested expansion of FK fields (``provider`` → full ServiceProvider blob) is
+not declared at class level — Nautobot's framework supports it via the
+``?depth=N`` query parameter at request time. Consumers who need flat
+hyperlinks omit it; consumers who want one-call workflows pass ``?depth=1``.
 """
 
 from nautobot.apps.api import NautobotModelSerializer
+from nautobot.extras.api.mixins import TaggedModelSerializerMixin
+from rest_framework import serializers
 
 from nautobot_contract_models.models import (
     Contract,
@@ -19,8 +27,10 @@ from nautobot_contract_models.models import (
 )
 
 
-class ServiceProviderSerializer(NautobotModelSerializer):
-    """Serializer for :class:`ServiceProvider`."""
+class ServiceProviderSerializer(NautobotModelSerializer, TaggedModelSerializerMixin):
+    """Serializer for :class:`ServiceProvider` with contract count annotation."""
+
+    contract_count = serializers.IntegerField(read_only=True)
 
     class Meta:
         """Meta."""
@@ -29,8 +39,12 @@ class ServiceProviderSerializer(NautobotModelSerializer):
         fields = "__all__"
 
 
-class ContractSerializer(NautobotModelSerializer):
-    """Serializer for :class:`Contract`."""
+class ContractSerializer(NautobotModelSerializer, TaggedModelSerializerMixin):
+    """Serializer for :class:`Contract` with invoice / assignment / attachment counts."""
+
+    invoice_count = serializers.IntegerField(read_only=True)
+    assignment_count = serializers.IntegerField(read_only=True)
+    attachment_count = serializers.IntegerField(read_only=True)
 
     class Meta:
         """Meta."""
@@ -39,8 +53,10 @@ class ContractSerializer(NautobotModelSerializer):
         fields = "__all__"
 
 
-class InvoiceSerializer(NautobotModelSerializer):
-    """Serializer for :class:`Invoice`."""
+class InvoiceSerializer(NautobotModelSerializer, TaggedModelSerializerMixin):
+    """Serializer for :class:`Invoice` with attachment count."""
+
+    attachment_count = serializers.IntegerField(read_only=True)
 
     class Meta:
         """Meta."""
@@ -49,13 +65,13 @@ class InvoiceSerializer(NautobotModelSerializer):
         fields = "__all__"
 
 
-class ContractAssignmentSerializer(NautobotModelSerializer):
+class ContractAssignmentSerializer(NautobotModelSerializer, TaggedModelSerializerMixin):
     """Serializer for :class:`ContractAssignment`.
 
-    Note: ``object`` is a GenericForeignKey, not a regular field — DRF will
-    serialize it as the target's URL via ``content_type`` + ``object_id``.
-    Phase 4 may add a custom representation that resolves the target object's
-    name for display.
+    The ``object`` GenericForeignKey is not a regular field — DRF surfaces
+    it as the target's URL via ``content_type`` + ``object_id``. Consumers
+    who want the resolved target (Device name, Circuit cid, etc.) call
+    ``GET /api/<target-app>/<target-model>/<object_id>/`` themselves.
     """
 
     class Meta:
@@ -65,7 +81,7 @@ class ContractAssignmentSerializer(NautobotModelSerializer):
         fields = "__all__"
 
 
-class InvoiceAttachmentSerializer(NautobotModelSerializer):
+class InvoiceAttachmentSerializer(NautobotModelSerializer, TaggedModelSerializerMixin):
     """Serializer for :class:`InvoiceAttachment`."""
 
     class Meta:
@@ -75,7 +91,7 @@ class InvoiceAttachmentSerializer(NautobotModelSerializer):
         fields = "__all__"
 
 
-class ContractAttachmentSerializer(NautobotModelSerializer):
+class ContractAttachmentSerializer(NautobotModelSerializer, TaggedModelSerializerMixin):
     """Serializer for :class:`ContractAttachment`."""
 
     class Meta:

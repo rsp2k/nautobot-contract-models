@@ -1,13 +1,14 @@
 """UI viewset for :class:`Invoice`."""
 
 from nautobot.apps.views import NautobotUIViewSet
+from nautobot.core.models.querysets import count_related
 from nautobot.core.ui.choices import SectionChoices
 from nautobot.core.ui.object_detail import ObjectDetailContent, ObjectFieldsPanel, ObjectsTablePanel
 
 from nautobot_contract_models.api.serializers import InvoiceSerializer
 from nautobot_contract_models.filters import InvoiceFilterSet
 from nautobot_contract_models.forms import InvoiceBulkEditForm, InvoiceFilterForm, InvoiceForm
-from nautobot_contract_models.models import Invoice
+from nautobot_contract_models.models import Invoice, InvoiceAttachment
 from nautobot_contract_models.tables import InvoiceAttachmentTable, InvoiceTable
 
 
@@ -18,7 +19,9 @@ class InvoiceUIViewSet(NautobotUIViewSet):
     filterset_class = InvoiceFilterSet
     filterset_form_class = InvoiceFilterForm
     form_class = InvoiceForm
-    queryset = Invoice.objects.select_related("contract", "status")
+    queryset = Invoice.objects.select_related("contract", "status").annotate(
+        attachment_count=count_related(InvoiceAttachment, "invoice"),
+    )
     serializer_class = InvoiceSerializer
     table_class = InvoiceTable
 
