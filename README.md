@@ -215,6 +215,18 @@ Design notes:
 
 Linked from the **Contracts → Reports → Renewal Calendar** nav menu.
 
+### Cost History
+
+`/plugins/contracts/reports/cost-history/` renders three time-series line charts (monthly burn, 90-day renewal forecast, active contract count), one line per currency, over a configurable window (4/12/26/52 weeks). Inline SVG — no JS chart library, prints natively.
+
+Data comes from the `CostSnapshot` model. Schedule the **Capture cost history snapshot** Job weekly to feed the trend; on a fresh install the page renders an empty state pointing operators at the Job. The **Detect cost anomalies** Job (also under *Contracts*) compares this week's snapshots to a configurable baseline (default 4 weeks ago) and emits a WARNING-level JobLogEntry whenever burn rate or 90-day renewal forecast moves by more than `threshold_pct` (default 20%) per currency — wire a webhook to JobLogEntry creation to route into Slack/email/a ticket.
+
+Snapshots are exposed via a **read-only REST API** at `/api/plugins/contracts/cost-snapshots/` for external tooling (Grafana, BI dashboards). Filterable by `snapshot_date__gte`, `snapshot_date__lte`, and `currency`. Writes (POST/PATCH/DELETE) return `405 Method Not Allowed` — snapshots are write-once historical facts, captured exclusively by the Job.
+
+### Notes
+
+Every Contract, Invoice, ServiceProvider, ContractAssignment, and Attachment detail page exposes a **Notes** tab that supports Markdown — useful for renewal reminders, vendor escalation contacts, internal context that doesn't fit in the structured fields. Notes are framework-provided by Nautobot (no plugin code added); they persist across changelog/object updates and are attributed to the user who created them.
+
 ## File attachments
 
 Both `Contract` and `Invoice` support multiple file attachments (the upload field accepts any file type — typically PDF for invoices and signed contracts).

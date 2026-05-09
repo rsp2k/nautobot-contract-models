@@ -339,6 +339,69 @@ than one with multiple y-axes. Different units mean different scales;
 combining them either lies about magnitudes or invites confusion.
 Single-purpose charts keep interpretation honest.
 
+### Phase 14 — CostSnapshot REST API (read-only) (~quarter session) — DONE
+
+External tooling (Grafana, BI) needs to pull the cost-trend without
+scraping the UI. Phase 14 exposes CostSnapshot via REST.
+
+- ✅ `CostSnapshotSerializer` (no Tags mixin — write-once doesn't tag)
+- ✅ `CostSnapshotAPIViewSet` composes DRF `ListModelMixin +
+  RetrieveModelMixin + GenericViewSet` directly so write methods
+  aren't routable. POST/PATCH/DELETE return 405 from the framework
+  rather than via permission policy — strictly stronger than
+  permission-based denial.
+- ✅ `CostSnapshotFilterSet` for date-range + currency filters.
+- ✅ Registered at `/api/plugins/contracts/cost-snapshots/`.
+- ✅ Smoke-tested in dev: list returns 16 rows, currency filter
+  returns 8, POST returns 405.
+
+GraphQL exposure was already covered by `extras_features("graphql")`
+on the model in Phase 13 — no additional wiring needed.
+
+### Phase 15 — Cost-anomaly detection (~half session) — DONE
+
+Diff this week's snapshot against a baseline; alert on jumps.
+
+- ✅ `cost.detect_anomalies(threshold, lookback_weeks)` returns a list
+  of per-currency-per-metric anomalies. Compares `monthly_burn` and
+  `renewal_90d` (NOT `active_contract_count`, which is usually
+  intentional and would generate false positives). Lookback uses
+  most-recent-at-or-before, so missed weekly runs don't break it.
+  New currencies (no historical baseline) report with
+  `pct_change=None` so callers can render "NEW".
+- ✅ `CostAnomalyJob` calls the helper. Anomalies → WARNING with
+  arrow + delta. No anomalies → INFO summary. No history → INFO
+  "no baseline".
+- ✅ Configurable `threshold_pct` (1-200, default 20) and
+  `lookback_weeks` (1-52, default 4).
+- ✅ +9 tests covering above/below threshold, identical baseline,
+  new-currency NEW path, per-currency independence, lookback
+  fallback.
+
+**Why not statistical anomaly detection:** at typical operator snapshot
+cadence (weekly), a fixed-lookback diff is enough to smooth noise
+without requiring seasonal-decomposition or rolling-window machinery.
+Operators wanting more rigor can run analysis against the Phase 14 API.
+
+### Phase 16 — Notes on contracts / invoices / providers — DONE (no code)
+
+Discovery: Nautobot's `NautobotUIViewSetRouter` already auto-registers
+`<model>/<pk>/notes/` for every viewset, AND the detail-view component
+framework auto-renders the Notes tab + Markdown form for any model
+backed by `NautobotUIViewSet`. **Zero plugin code needed.**
+
+- ✅ Verified end-to-end against the Acme contract: created a
+  Markdown note ("**Renewal reminder**: Negotiated 60-day notice
+  period…"), confirmed Notes tab counter went 0 → 1, confirmed
+  Markdown bold rendered, confirmed user attribution to "admin".
+- ✅ README updated with a "Notes" subsection so operators discover
+  the feature.
+
+**Pattern note:** before assuming you need to add `extras_features("X")`
+for some feature X, check `nautobot-server show_urls` (or the URL-list
+404 page) for `<model>_<feature>` — if the URL is auto-generated, the
+UI is free.
+
 ## Tech-stack decisions (final, don't relitigate)
 
 | Concern | Choice | Rationale |
