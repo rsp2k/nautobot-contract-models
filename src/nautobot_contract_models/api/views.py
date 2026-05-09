@@ -17,11 +17,13 @@ helper — splitting them by axis (UI vs. API) makes per-surface tuning
 
 from nautobot.apps.api import NautobotModelViewSet
 from nautobot.core.models.querysets import count_related
+from rest_framework import mixins, viewsets
 
 from nautobot_contract_models.api.serializers import (
     ContractAssignmentSerializer,
     ContractAttachmentSerializer,
     ContractSerializer,
+    CostSnapshotSerializer,
     InvoiceAttachmentSerializer,
     InvoiceSerializer,
     ServiceProviderSerializer,
@@ -30,6 +32,7 @@ from nautobot_contract_models.filters import (
     ContractAssignmentFilterSet,
     ContractAttachmentFilterSet,
     ContractFilterSet,
+    CostSnapshotFilterSet,
     InvoiceAttachmentFilterSet,
     InvoiceFilterSet,
     ServiceProviderFilterSet,
@@ -38,6 +41,7 @@ from nautobot_contract_models.models import (
     Contract,
     ContractAssignment,
     ContractAttachment,
+    CostSnapshot,
     Invoice,
     InvoiceAttachment,
     ServiceProvider,
@@ -96,3 +100,25 @@ class ContractAttachmentAPIViewSet(NautobotModelViewSet):
     queryset = ContractAttachment.objects.select_related("contract")
     serializer_class = ContractAttachmentSerializer
     filterset_class = ContractAttachmentFilterSet
+
+
+class CostSnapshotAPIViewSet(
+    mixins.ListModelMixin,
+    mixins.RetrieveModelMixin,
+    viewsets.GenericViewSet,
+):
+    """READ-ONLY REST API for :class:`CostSnapshot`.
+
+    Snapshots are write-once telemetry: the only legitimate writer is
+    the Job that captures them. Allowing POST/PATCH/DELETE through the
+    API would let external tooling rewrite history, defeating the
+    "we used to spend $X with that vendor" use case.
+
+    Composes DRF's mixins directly rather than subclassing
+    NautobotModelViewSet (which gives full CRUD) — explicit list +
+    retrieve only.
+    """
+
+    queryset = CostSnapshot.objects.all()
+    serializer_class = CostSnapshotSerializer
+    filterset_class = CostSnapshotFilterSet

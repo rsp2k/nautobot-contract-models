@@ -13,6 +13,7 @@ from nautobot_contract_models.api.views import (
     ContractAPIViewSet,
     ContractAssignmentAPIViewSet,
     ContractAttachmentAPIViewSet,
+    CostSnapshotAPIViewSet,
     InvoiceAPIViewSet,
     InvoiceAttachmentAPIViewSet,
     ServiceProviderAPIViewSet,
@@ -25,6 +26,9 @@ router.register("contract-attachments", ContractAttachmentAPIViewSet)
 router.register("invoices", InvoiceAPIViewSet)
 router.register("invoice-attachments", InvoiceAttachmentAPIViewSet)
 router.register("contract-assignments", ContractAssignmentAPIViewSet)
+# basename= explicitly because the read-only viewset has no `model`
+# attribute that the router can derive from automatically.
+router.register("cost-snapshots", CostSnapshotAPIViewSet, basename="costsnapshot")
 
 app_name = "nautobot_contract_models-api"
 urlpatterns = router.urls

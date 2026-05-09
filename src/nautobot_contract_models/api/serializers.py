@@ -21,6 +21,7 @@ from nautobot_contract_models.models import (
     Contract,
     ContractAssignment,
     ContractAttachment,
+    CostSnapshot,
     Invoice,
     InvoiceAttachment,
     ServiceProvider,
@@ -98,4 +99,20 @@ class ContractAttachmentSerializer(NautobotModelSerializer, TaggedModelSerialize
         """Meta."""
 
         model = ContractAttachment
+        fields = "__all__"
+
+
+class CostSnapshotSerializer(NautobotModelSerializer):
+    """Serializer for :class:`CostSnapshot` — read-only telemetry, no Tags mixin.
+
+    Snapshots are write-once aggregates; they don't support tags or
+    attachments. The viewset paired with this serializer also strips
+    write methods (POST/PATCH/DELETE) so external tools can't rewrite
+    history.
+    """
+
+    class Meta:
+        """Meta."""
+
+        model = CostSnapshot
         fields = "__all__"
