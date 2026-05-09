@@ -61,9 +61,12 @@ exclude = [
     "tests/",
     # Source markdown for the docs site lives at the repo root and gets
     # rendered into src/.../static/.../docs/ at build time. Ship the
-    # rendered HTML (which lives under src/) but not the source.
-    "docs/",
-    "mkdocs.yml",
+    # rendered HTML (which lives under src/) but not the source. Leading
+    # slash anchors the match to the repo root — without it, hatchling's
+    # gitignore-style matching would also exclude the nested
+    # src/.../static/.../docs/ rendered HTML the wheel needs.
+    "/docs/",
+    "/mkdocs.yml",
 ]
 
 [tool.ruff]
