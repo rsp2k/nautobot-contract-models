@@ -1,0 +1,131 @@
+---
+dev_addr: "127.0.0.1:8001"
+edit_uri: "edit/main/docs"
+site_dir: "src/nautobot_contract_models/static/nautobot_contract_models/docs"
+site_name: "Nautobot Contract Models Documentation"
+site_url: "https://docs.nautobot.com/projects/nautobot-contract-models/en/latest/"
+repo_url: "https://github.com/rpmcg/nautobot-contract-models"
+copyright: "Copyright &copy; The Authors"
+theme:
+  name: "material"
+  navigation_depth: 4
+  custom_dir: "docs/assets/overrides"
+  hljs_languages:
+    - "django"
+    - "yaml"
+  features:
+    - "content.action.edit"
+    - "content.action.view"
+    - "content.code.copy"
+    - "navigation.footer"
+    - "navigation.indexes"
+    - "navigation.tabs"
+    - "navigation.tabs.sticky"
+    - "navigation.tracking"
+    - "search.highlight"
+    - "search.share"
+    - "search.suggest"
+  favicon: "assets/favicon.ico"
+  logo: "assets/nautobot_logo.svg"
+  palette:
+    - media: "(prefers-color-scheme: light)"
+      scheme: "default"
+      primary: "black"
+      toggle:
+        icon: "material/weather-sunny"
+        name: "Switch to dark mode"
+    - media: "(prefers-color-scheme: dark)"
+      scheme: "slate"
+      primary: "black"
+      toggle:
+        icon: "material/weather-night"
+        name: "Switch to light mode"
+extra_css:
+  - "assets/extra.css"
+
+extra:
+  generator: false
+  social:
+    - icon: "fontawesome/brands/github"
+      link: "https://github.com/nautobot/nautobot"
+      name: "Nautobot Core"
+
+markdown_extensions:
+  - "markdown_version_annotations":
+      admonition_tag: "???"
+  - "admonition"
+  - "toc":
+      permalink: true
+  - "attr_list"
+  - "md_in_html"
+  - "pymdownx.details"
+  - "pymdownx.highlight":
+      anchor_linenums: true
+  - "pymdownx.inlinehilite"
+  - "pymdownx.snippets"
+  - "pymdownx.superfences":
+      custom_fences:
+        - name: "mermaid"
+          class: "mermaid"
+          format: !!python/name:pymdownx.superfences.fence_code_format
+  - "pymdownx.blocks.caption"
+  - "footnotes"
+  - "meta"
+
+plugins:
+  - "search"
+  - "glightbox"
+  - "mkdocstrings":
+      default_handler: "python"
+      handlers:
+        python:
+          paths: ["src"]
+          options:
+            show_root_heading: true
+
+watch:
+  - "README.md"
+
+validation:
+  omitted_files: "warn"
+  absolute_links: "warn"
+  unrecognized_links: "warn"
+  anchors: "warn"
+
+nav:
+  - Overview: "index.md"
+  - User Guide:
+      - App Overview: "user/app_overview.md"
+      - Getting Started: "user/app_getting_started.md"
+      - Using the App: "user/app_use_cases.md"
+      - External Interactions: "user/external_interactions.md"
+      - Frequently Asked Questions: "user/faq.md"
+      - Data Models:
+          - Service Provider: "models/serviceprovider.md"
+          - Contract: "models/contract.md"
+          - Invoice: "models/invoice.md"
+          - Contract Assignment: "models/contractassignment.md"
+          - Contract Attachment: "models/contractattachment.md"
+          - Invoice Attachment: "models/invoiceattachment.md"
+          - Cost Snapshot: "models/costsnapshot.md"
+  - Administrator Guide:
+      - Install and Configure: "admin/install.md"
+      - Upgrade: "admin/upgrade.md"
+      - Uninstall: "admin/uninstall.md"
+      - Compatibility Matrix: "admin/compatibility_matrix.md"
+      - Release Notes:
+          - "admin/release_notes/index.md"
+          - v2026.5.9: "admin/release_notes/version_2026.5.9.md"
+  - Developer Guide:
+      - Extending the App: "dev/extending.md"
+      - Contributing to the App: "dev/contributing.md"
+      - Development Environment: "dev/dev_environment.md"
+      - Release Checklist: "dev/release_checklist.md"
+      - Code Reference:
+          - "dev/code_reference/index.md"
+          - Models: "dev/code_reference/models.md"
+          - Cost Helpers: "dev/code_reference/cost.md"
+          - Priority Helpers: "dev/code_reference/priority.md"
+          - Coverage Helpers: "dev/code_reference/coverage.md"
+          - Jobs: "dev/code_reference/jobs.md"
+  - Nautobot Docs Home ↗︎: "https://docs.nautobot.com"

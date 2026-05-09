@@ -4,7 +4,7 @@ build-backend = "hatchling.build"
 
 [project]
 name = "nautobot-contract-models"
-version = "2026.5.8"
+version = "2026.5.9"
 description = "First-class Contract, Invoice, and ServiceProvider models for Nautobot."
 readme = "README.md"
 requires-python = ">=3.10"
@@ -29,6 +29,14 @@ dev = [
     "pytest>=8.0",
     "ruff>=0.6",
 ]
+docs = [
+    # Material for MkDocs theme + plugins, matching the nautobot-app docs style.
+    "mkdocs>=1.6,<2",
+    "mkdocs-material>=9.5,<10",
+    "mkdocstrings[python]>=0.27,<1",
+    "mkdocs-glightbox>=0.5,<1",
+    "markdown-version-annotations>=1.0,<2",
+]
 
 [project.urls]
 Homepage = "https://github.com/rsp/nautobot-contract-models"
@@ -51,6 +59,11 @@ exclude = [
     "build/",
     "development/",
     "tests/",
+    # Source markdown for the docs site lives at the repo root and gets
+    # rendered into src/.../static/.../docs/ at build time. Ship the
+    # rendered HTML (which lives under src/) but not the source.
+    "docs/",
+    "mkdocs.yml",
 ]
 
 [tool.ruff]
