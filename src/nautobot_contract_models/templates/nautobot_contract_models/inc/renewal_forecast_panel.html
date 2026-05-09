@@ -1,0 +1,37 @@
+{% comment %}
+"Renewal Forecast" home dashboard panel — total renewal cost in 30/90/365-day
+windows, grouped by currency. Powered by cost.renewal_cost_in_window.
+
+Context variables:
+- renewal_forecast: list of (window_label, dict[currency, Decimal]) tuples
+{% endcomment %}
+
+{% if perms.nautobot_contract_models.view_contract %}
+    {% if renewal_forecast %}
+        {% for label, totals in renewal_forecast %}
+            <div class="list-group-item">
+                <strong>{{ label }}</strong>
+                {% if totals %}
+                    <table class="table table-sm mb-0 mt-2">
+                        {% for currency, total in totals.items %}
+                            <tr>
+                                <td class="text-secondary">{{ currency }}</td>
+                                <td class="text-end">{{ total|floatformat:2 }}</td>
+                            </tr>
+                        {% endfor %}
+                    </table>
+                {% else %}
+                    <div class="small text-secondary">Nothing renewing.</div>
+                {% endif %}
+            </div>
+        {% endfor %}
+    {% else %}
+        <div class="card-body text-secondary">
+            No upcoming renewals.
+        </div>
+    {% endif %}
+{% else %}
+    <div class="card-body text-secondary">
+        <span class="mdi mdi-lock" aria-hidden="true"></span> No permission
+    </div>
+{% endif %}

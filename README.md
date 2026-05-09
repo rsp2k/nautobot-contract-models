@@ -160,6 +160,29 @@ Each per-contract log entry has the Contract attached as the JobLogEntry's `obje
 
 A "Contracts" panel appears on Nautobot's home page showing the next 10 contracts within `renewal_window_days`, ordered soonest first. Each row links to the contract detail page. The panel respects the user's `view_contract` permission and renders an empty-state message when there are no upcoming renewals.
 
+## Cost analytics
+
+Contracts have a `billing_period` field (`monthly`, `quarterly`, `semiannual`, `annual`, `one_time`) so cost helpers can normalize across mixed billing cadences. Without it, a $1,200 annual contract and a $1,200 monthly contract are indistinguishable at the schema level — aggregating gives wrong answers.
+
+The `nautobot_contract_models.cost` module exposes:
+
+| Helper | Returns | Purpose |
+|---|---|---|
+| `monthly_cost(contract)` | `Decimal` | `recurring_cost` normalized to a per-month figure |
+| `annual_cost(contract)` | `Decimal` | `monthly_cost × 12` |
+| `total_contract_value(contract)` | `Decimal` | `monthly × term_months + one_time_cost` |
+| `burn_rate_by_currency()` | `dict[str, Decimal]` | sum of monthly_cost across active contracts, grouped by currency |
+| `renewal_cost_in_window(days)` | `dict[str, Decimal]` | total contract value for end-dates falling in the window |
+| `spend_by_vendor(limit=10)` | `list[(provider, monthly, currency)]` | top vendors by current monthly spend |
+
+Aggregations always group by `Contract.currency` — we do **not** do FX conversion in v1.
+
+Two home dashboard panels surface the data: **Cost Summary** (current monthly burn per currency, annualized, top 5 vendors) and **Renewal Forecast** (renewal cost in 30/90/365-day windows).
+
+The `Monthly cost report` Job (under the *Contracts* group) logs the same numbers to `JobLogEntry`. Schedule it weekly to get a cost trend in JobResult history without standing up a separate time-series store.
+
+⚠️ **Migration note for upgrading installs:** migration `0007_contract_billing_period` defaults every existing contract to `billing_period='monthly'`. If you have annual / quarterly contracts already in the database, edit them after upgrade — otherwise the burn-rate panels will over-count by 12x (annual) or 3x (quarterly).
+
 ## File attachments
 
 Both `Contract` and `Invoice` support multiple file attachments (the upload field accepts any file type — typically PDF for invoices and signed contracts).

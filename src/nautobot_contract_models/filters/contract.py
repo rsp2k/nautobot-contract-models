@@ -33,6 +33,10 @@ class ContractFilterSet(StatusModelFilterSetMixin, TenancyModelFilterSetMixin, N
         """Meta."""
 
         model = Contract
+        # Structured choice fields must be listed here for the FilterForm's
+        # MultipleChoiceField to actually filter the queryset. Phase 7 added
+        # the form widgets but missed updating this list — Phase 8 also adds
+        # billing_period and backfills the missing entries.
         fields = [
             "id",
             "name",
@@ -40,4 +44,10 @@ class ContractFilterSet(StatusModelFilterSetMixin, TenancyModelFilterSetMixin, N
             "currency",
             "start_date",
             "end_date",
+            "contract_type",
+            "coverage_hours",
+            "response_time",
+            "restoration_time",
+            "auto_renew",
+            "billing_period",
         ]

@@ -14,11 +14,13 @@ dashboard on the next page load.
 """
 
 from datetime import date, timedelta
+from decimal import Decimal
 
 from django.conf import settings
 from nautobot.apps.ui import HomePagePanel
 from nautobot.dcim.models import Device
 
+from nautobot_contract_models import cost
 from nautobot_contract_models.helpers import has_active_coverage
 from nautobot_contract_models.models import Contract
 
@@ -64,6 +66,36 @@ def get_uncovered_devices(request):
     return uncovered
 
 
+def get_cost_summary(request):
+    """Build the Cost Summary panel context.
+
+    Returns burn-rate-by-currency, an annualized version (burn × 12 — done
+    here in Python because Django's template ``widthratio`` is integer-only
+    and would lose decimal precision), and the top-vendor list.
+    """
+    burn = cost.burn_rate_by_currency()
+    annualized = {currency: total * Decimal("12") for currency, total in burn.items()}
+    top_vendors = cost.spend_by_vendor(limit=5)
+    return {
+        "burn_by_currency": burn,
+        "annualized_by_currency": annualized,
+        "top_vendors": top_vendors,
+    }
+
+
+def get_renewal_forecast(request):
+    """Build the Renewal Forecast panel context.
+
+    Three windows: 30, 90, 365 days. Each entry is a (label, dict[currency, Decimal])
+    tuple so the template can render rows without computing anything.
+    """
+    return [
+        ("Next 30 days", cost.renewal_cost_in_window(30)),
+        ("Next 90 days", cost.renewal_cost_in_window(90)),
+        ("Next 365 days", cost.renewal_cost_in_window(365)),
+    ]
+
+
 layout = (
     HomePagePanel(
         name="Contracts",
@@ -78,5 +110,22 @@ layout = (
         permissions=["dcim.view_device"],
         custom_data={"uncovered_devices": get_uncovered_devices},
         custom_template="uncovered_devices_panel.html",
+    ),
+    HomePagePanel(
+        name="Cost Summary",
+        weight=1520,
+        permissions=["nautobot_contract_models.view_contract"],
+        # Single context variable holding all three sub-values. The template
+        # reads ``cost_summary.burn_by_currency`` etc. — one queryset pass
+        # per render rather than three.
+        custom_data={"cost_summary": get_cost_summary},
+        custom_template="cost_summary_panel.html",
+    ),
+    HomePagePanel(
+        name="Renewal Forecast",
+        weight=1530,
+        permissions=["nautobot_contract_models.view_contract"],
+        custom_data={"renewal_forecast": get_renewal_forecast},
+        custom_template="renewal_forecast_panel.html",
     ),
 )

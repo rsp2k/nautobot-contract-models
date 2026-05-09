@@ -15,6 +15,7 @@ from nautobot.apps.forms import (
 from nautobot.tenancy.models import Tenant
 
 from nautobot_contract_models.choices import (
+    BillingPeriodChoices,
     ContractTypeChoices,
     CoverageHoursChoices,
     ResponseTimeChoices,
@@ -49,6 +50,7 @@ class ContractForm(NautobotModelForm):
             "restoration_time",
             "renewal_terms",
             "recurring_cost",
+            "billing_period",
             "one_time_cost",
             "currency",
             "description",
@@ -74,6 +76,7 @@ class ContractFilterForm(StatusModelFilterFormMixin, NautobotFilterForm):
     contract_type = forms.MultipleChoiceField(choices=ContractTypeChoices, required=False)
     coverage_hours = forms.MultipleChoiceField(choices=CoverageHoursChoices, required=False)
     response_time = forms.MultipleChoiceField(choices=ResponseTimeChoices, required=False)
+    billing_period = forms.MultipleChoiceField(choices=BillingPeriodChoices, required=False)
     auto_renew = forms.NullBooleanField(required=False)
 
 

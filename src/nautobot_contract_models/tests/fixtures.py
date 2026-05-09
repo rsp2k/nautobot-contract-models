@@ -109,6 +109,8 @@ def make_contract(
         start_date=start_date,
         end_date=end_date,
         recurring_cost=kwargs.pop("recurring_cost", Decimal("100.00")),
+        billing_period=kwargs.pop("billing_period", "monthly"),
+        currency=kwargs.pop("currency", "USD"),
         **kwargs,
     )
 

@@ -18,6 +18,7 @@ from django.conf import settings
 from nautobot.apps.jobs import BooleanVar, IntegerVar, Job, ObjectVar, register_jobs
 from nautobot.dcim.models import Device, Location
 
+from nautobot_contract_models import cost
 from nautobot_contract_models.helpers import has_active_coverage
 from nautobot_contract_models.models import Contract
 
@@ -195,4 +196,73 @@ class CoverageGapJob(Job):
         return uncovered
 
 
-register_jobs(RenewalCheckJob, CoverageGapJob)
+class CostReportJob(Job):
+    """Log a snapshot of fleet-wide contract costs to JobLogEntry.
+
+    Read-only. Operators schedule this weekly to get a cost trend in the
+    Job result history without running a separate time-series store —
+    each scheduled run becomes a row of JobLogEntry that can be searched,
+    exported, or piped to a notification webhook.
+
+    Fields logged:
+        - Monthly burn rate per currency
+        - 90-day renewal cost per currency
+        - Top vendor by current monthly spend
+        - Direct coverage-gap count (Devices with no direct ContractAssignment)
+    """
+
+    forecast_window_days = IntegerVar(
+        default=90,
+        description="Forecast window for the renewal-cost line. Defaults to 90 days.",
+        min_value=1,
+        max_value=3650,
+    )
+
+    class Meta:
+        """Job metadata."""
+
+        name = "Monthly cost report"
+        description = "Log monthly burn rate, renewal forecast, top vendor, and coverage gap count."
+        grouping = NAME
+        has_sensitive_variables = False
+
+    def run(self, forecast_window_days):
+        """Compute the cost summary and write per-line INFO log entries."""
+        burn = cost.burn_rate_by_currency()
+        renewal = cost.renewal_cost_in_window(forecast_window_days)
+        top_vendors = cost.spend_by_vendor(limit=1)
+        gap_count = cost.coverage_gap_count()
+
+        if not burn:
+            self.logger.info("No active contracts — burn rate is zero across all currencies.")
+        else:
+            for currency, total in burn.items():
+                self.logger.info("Monthly burn (%s): %s", currency, total)
+
+        if not renewal:
+            self.logger.info("No contracts renewing in the next %d day(s).", forecast_window_days)
+        else:
+            for currency, total in renewal.items():
+                self.logger.info(
+                    "%d-day renewal cost (%s): %s",
+                    forecast_window_days,
+                    currency,
+                    total,
+                )
+
+        if top_vendors:
+            provider, monthly, currency = top_vendors[0]
+            self.logger.info("Top vendor by monthly spend: %s (%s %s/mo)", provider.name, monthly, currency)
+
+        # Coverage-gap count uses the cheap direct-only query — operators
+        # who want the transitive answer should run CoverageGapJob.
+        self.logger.info("Devices without a direct contract assignment: %d", gap_count)
+
+        return {
+            "burn": {c: str(v) for c, v in burn.items()},
+            "renewal": {c: str(v) for c, v in renewal.items()},
+            "coverage_gaps": gap_count,
+        }
+
+
+register_jobs(RenewalCheckJob, CoverageGapJob, CostReportJob)

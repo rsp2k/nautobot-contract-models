@@ -1,0 +1,66 @@
+{% comment %}
+"Cost Summary" home dashboard panel — current monthly burn (per currency),
+annualized run rate, and top-spending vendors. Powered by the cost.py
+helpers; data callables live in homepage.py.
+
+Context variables:
+- cost_summary.burn_by_currency: dict[currency, Decimal] — monthly burn rate per currency
+- cost_summary.annualized_by_currency: dict[currency, Decimal] — burn × 12, pre-computed
+- cost_summary.top_vendors: list of (provider, monthly, currency) — top N vendors
+{% endcomment %}
+
+{% if perms.nautobot_contract_models.view_contract %}
+    {% if cost_summary.burn_by_currency %}
+        <div class="list-group-item">
+            <strong>Monthly burn</strong>
+            <table class="table table-sm mb-0 mt-2">
+                {% for currency, total in cost_summary.burn_by_currency.items %}
+                    <tr>
+                        <td class="text-secondary">{{ currency }}</td>
+                        <td class="text-end">{{ total|floatformat:2 }}</td>
+                        <td class="text-secondary text-end small">/mo</td>
+                    </tr>
+                {% endfor %}
+            </table>
+        </div>
+        <div class="list-group-item">
+            <strong>Annualized</strong>
+            <table class="table table-sm mb-0 mt-2">
+                {% for currency, total in cost_summary.annualized_by_currency.items %}
+                    <tr>
+                        <td class="text-secondary">{{ currency }}</td>
+                        <td class="text-end">{{ total|floatformat:2 }}</td>
+                        <td class="text-secondary text-end small">/yr</td>
+                    </tr>
+                {% endfor %}
+            </table>
+        </div>
+    {% else %}
+        <div class="card-body text-secondary">
+            No active contracts.
+        </div>
+    {% endif %}
+
+    {% if cost_summary.top_vendors %}
+        <div class="list-group-item">
+            <strong>Top vendors by spend</strong>
+            <table class="table table-sm mb-0 mt-2">
+                {% for provider, total, currency in cost_summary.top_vendors %}
+                    <tr>
+                        <td>
+                            <a href="{{ provider.get_absolute_url }}">
+                                {{ provider.name }}
+                            </a>
+                        </td>
+                        <td class="text-end">{{ total|floatformat:2 }}</td>
+                        <td class="text-secondary text-end small">{{ currency }}/mo</td>
+                    </tr>
+                {% endfor %}
+            </table>
+        </div>
+    {% endif %}
+{% else %}
+    <div class="card-body text-secondary">
+        <span class="mdi mdi-lock" aria-hidden="true"></span> No permission
+    </div>
+{% endif %}

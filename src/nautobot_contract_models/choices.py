@@ -112,3 +112,31 @@ class RestorationTimeChoices(ChoiceSet):
         (DAYS_5, "5 business days"),
         (NONE, "No restoration SLA"),
     )
+
+
+class BillingPeriodChoices(ChoiceSet):
+    """Cadence at which ``recurring_cost`` is charged.
+
+    Phase 8 introduces this so cost analytics can normalize across
+    contracts. Without it, a $1,200 annual contract and a $1,200 monthly
+    contract are indistinguishable at the schema level — aggregating the
+    two would give a $2,400 monthly burn that's wrong by 12x.
+
+    ``one_time`` flags contracts that aren't recurring at all — typically
+    setup-fee-only or perpetual-license deals. The cost helpers fold those
+    into ``total_contract_value`` rather than the burn-rate calculation.
+    """
+
+    MONTHLY = "monthly"
+    QUARTERLY = "quarterly"
+    SEMIANNUAL = "semiannual"
+    ANNUAL = "annual"
+    ONE_TIME = "one_time"
+
+    CHOICES = (
+        (MONTHLY, "Monthly"),
+        (QUARTERLY, "Quarterly"),
+        (SEMIANNUAL, "Every 6 months"),
+        (ANNUAL, "Annual"),
+        (ONE_TIME, "One-time / non-recurring"),
+    )

@@ -3,6 +3,7 @@
 import django_tables2 as tables
 from nautobot.apps.tables import BaseTable, ButtonsColumn, StatusTableMixin, TagColumn, ToggleColumn
 
+from nautobot_contract_models.cost import monthly_cost
 from nautobot_contract_models.models import Contract
 
 
@@ -25,12 +26,20 @@ class ContractTable(StatusTableMixin, BaseTable):
     response_time = tables.Column()
     auto_renew = tables.BooleanColumn()
     recurring_cost = tables.Column()
+    billing_period = tables.Column()
+    # Computed: normalized monthly figure across mixed billing cadences. Not a
+    # model field — django_tables2 renders it via render_monthly_cost below.
+    monthly_cost = tables.Column(empty_values=(), verbose_name="Monthly", orderable=False)
     one_time_cost = tables.Column()
     currency = tables.Column()
     invoice_count = tables.Column(verbose_name="Invoices", accessor="invoices.count")
     assignment_count = tables.Column(verbose_name="Coverage", accessor="assignments.count")
     tags = TagColumn(url_name="plugins:nautobot_contract_models:contract_list")
     actions = ButtonsColumn(Contract)
+
+    def render_monthly_cost(self, record):
+        """Render the cost helper's normalized monthly figure with two decimals."""
+        return f"{monthly_cost(record):.2f}"
 
     class Meta(BaseTable.Meta):
         """Meta."""
@@ -50,6 +59,8 @@ class ContractTable(StatusTableMixin, BaseTable):
             "start_date",
             "end_date",
             "recurring_cost",
+            "billing_period",
+            "monthly_cost",
             "one_time_cost",
             "currency",
             "invoice_count",
@@ -64,7 +75,7 @@ class ContractTable(StatusTableMixin, BaseTable):
             "status",
             "contract_type",
             "end_date",
-            "recurring_cost",
+            "monthly_cost",
             "currency",
             "actions",
         )

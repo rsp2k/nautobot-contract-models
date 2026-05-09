@@ -9,6 +9,7 @@ from nautobot.extras.models.statuses import StatusField
 from nautobot.extras.utils import extras_features
 
 from nautobot_contract_models.choices import (
+    BillingPeriodChoices,
     ContractTypeChoices,
     CoverageHoursChoices,
     ResponseTimeChoices,
@@ -68,7 +69,16 @@ class Contract(PrimaryModel):
         max_digits=12,
         decimal_places=2,
         default=Decimal("0.00"),
-        help_text="Periodic cost (per the renewal cycle implied by the dates).",
+        help_text="Periodic cost charged at the cadence set by ``billing_period`` (default monthly).",
+    )
+    billing_period = models.CharField(
+        max_length=20,
+        choices=BillingPeriodChoices,
+        default=BillingPeriodChoices.MONTHLY,
+        help_text=(
+            "Cadence at which recurring_cost is charged. Drives cost-analytics "
+            "normalization (monthly burn rate, annual run rate, renewal forecast)."
+        ),
     )
     one_time_cost = models.DecimalField(
         max_digits=12,

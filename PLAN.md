@@ -123,6 +123,76 @@ query for `contracts` works.
   files + 1 project-state file) so future Nautobot plugins start with
   the lessons baked in
 
+### Phase 7 — Real-world contract modeling (~half session) — DONE
+
+- ✅ Structured SLA fields on Contract: `contract_type`, `coverage_hours`,
+  `response_time`, `restoration_time`, `notice_period_days`, `auto_renew`,
+  `term_months` (replacing free-text `renewal_terms` with queryable enums)
+- ✅ Per-assignment coverage scope on ContractAssignment: `coverage_start`,
+  `coverage_end`, `scope_notes`, `is_primary` (supports mid-term changes)
+- ✅ Transitive coverage helper in `helpers.py` walking
+  `(self, tenant, location, rack, device)` ancestry
+- ✅ `RenewalCheckJob` severity rubric considers notice window + auto_renew
+- ✅ `CoverageGapJob` + "Coverage Gaps" home dashboard panel
+- ✅ 21 integration tests covering helper + Job behavior
+
+### Phase 8 — Cost analytics (~1 session)
+
+**Why:** today's `recurring_cost` field is documented as "periodic, per the
+renewal cycle implied by the dates" — ambiguous enough that aggregating
+across contracts gives wrong answers. Procurement/finance teams can't get
+monthly burn rate, annualized run rate, or 90-day renewal forecast out of
+the current schema. Phase 8 normalizes the cost surface and exposes it on
+the dashboard.
+
+**Schema change (one migration):**
+
+- `Contract.billing_period` — new ChoiceSet field with values `monthly`,
+  `quarterly`, `semiannual`, `annual`, `one_time`
+- Migration `0007_contract_billing_period.py` defaults existing rows to
+  `monthly` (operators with annual contracts must edit them after upgrade
+  — risk acknowledged; alternative was an explicit-blank field that would
+  silently render dashboards as "unconfigured" until every contract was
+  audited)
+
+**New module `cost.py`:**
+
+- `monthly_cost(contract)` — normalized monthly figure in contract currency
+- `annual_cost(contract)` — `monthly_cost × 12`
+- `total_contract_value(contract)` — `monthly × term_months + one_time_cost`
+- `burn_rate_by_currency(*, on_date=None)` — `dict[currency, Decimal]` for
+  active contracts (no FX; we group rather than sum across)
+- `renewal_cost_in_window(window_days, *, on_date=None)` — same shape, for
+  contracts with `end_date` falling in window
+- `spend_by_vendor(*, on_date=None)` — top vendors by current monthly spend
+
+**UI surface:**
+
+- ContractForm + detail panel + list table get `billing_period` and a
+  computed `monthly_cost` column
+- Two new home dashboard panels:
+  - "Cost Summary" — current monthly burn (per currency), annualized,
+    top 5 vendors
+  - "Renewal Forecast" — total renewal cost in 30/90/365-day windows
+    (per currency)
+
+**New Job: `CostReportJob`** — pure read; logs monthly burn + 90-day
+forecast + top vendor + coverage-gap count to JobLogEntry. Operators
+schedule it weekly to get a trend in JobResult history without us
+building a time-series store.
+
+**Tests (~10 new):**
+
+- `test_cost.py` — each billing_period normalization; cross-currency
+  grouping; renewal window math; one-time-cost exclusion from burn rate;
+  zero/null edge cases
+- Extend `test_jobs.py` with CostReportJob
+
+**Acceptance:** dashboard shows correct per-currency burn rate against the
+dev seed data; `make test` runs ≥31 tests passing; `nautobot-server
+runjob` for CostReportJob produces a JobLogEntry with the expected
+INFO-level summary.
+
 ## Tech-stack decisions (final, don't relitigate)
 
 | Concern | Choice | Rationale |

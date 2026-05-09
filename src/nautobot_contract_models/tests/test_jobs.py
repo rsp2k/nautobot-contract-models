@@ -19,9 +19,9 @@ from unittest.mock import MagicMock
 
 from nautobot.core.testing import TestCase
 
-from nautobot_contract_models.jobs import CoverageGapJob, RenewalCheckJob
+from nautobot_contract_models.jobs import CostReportJob, CoverageGapJob, RenewalCheckJob
 
-from .fixtures import assign, make_contract, make_device, make_location, make_tenant
+from .fixtures import assign, make_contract, make_device, make_location, make_provider, make_tenant
 
 
 class RenewalCheckJobSeverityTests(TestCase):
@@ -182,3 +182,60 @@ class CoverageGapJobTests(TestCase):
         uncovered_count = job.run(location=None)
 
         self.assertEqual(uncovered_count, 1)
+
+
+class CostReportJobTests(TestCase):
+    """Verify CostReportJob logs the expected per-currency / vendor / gap lines."""
+
+    def _instantiate_job(self):
+        job = CostReportJob()
+        job.logger = MagicMock()
+        return job
+
+    def test_burn_rate_logged_per_currency(self):
+        from decimal import Decimal as D
+
+        make_contract(name="usd-c", recurring_cost=D("100"), currency="USD")
+        make_contract(name="eur-c", recurring_cost=D("200"), currency="EUR")
+        job = self._instantiate_job()
+
+        result = job.run(forecast_window_days=90)
+
+        self.assertIn("USD", result["burn"])
+        self.assertIn("EUR", result["burn"])
+        # At minimum: 2 burn lines + 1 top-vendor + 1 gap-count line.
+        self.assertGreaterEqual(job.logger.info.call_count, 4)
+
+    def test_no_active_contracts_logs_zero_message(self):
+        job = self._instantiate_job()
+
+        result = job.run(forecast_window_days=90)
+
+        self.assertEqual(result["burn"], {})
+        # The "no active contracts" path was hit — at least one INFO call.
+        self.assertGreaterEqual(job.logger.info.call_count, 1)
+
+    def test_top_vendor_line_present(self):
+        from decimal import Decimal as D
+
+        provider = make_provider("DominantVendor")
+        make_contract(name="big", provider=provider, recurring_cost=D("999"))
+        job = self._instantiate_job()
+
+        job.run(forecast_window_days=90)
+
+        # Find the call mentioning the top vendor.
+        all_calls = " ".join(str(c) for c in job.logger.info.call_args_list)
+        self.assertIn("DominantVendor", all_calls)
+
+    def test_returns_serializable_summary_dict(self):
+        from decimal import Decimal as D
+
+        make_contract(name="a", recurring_cost=D("100"))
+        job = self._instantiate_job()
+
+        result = job.run(forecast_window_days=90)
+
+        # Decimals stringified so the JobResult JSON serializer is happy.
+        self.assertIsInstance(result["burn"]["USD"], str)
+        self.assertIn("coverage_gaps", result)
