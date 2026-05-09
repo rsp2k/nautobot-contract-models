@@ -27,7 +27,20 @@ class ContractAssignmentForm(NautobotModelForm):
         """Meta."""
 
         model = ContractAssignment
-        fields = ["contract", "content_type", "object_id", "tags"]
+        fields = [
+            "contract",
+            "content_type",
+            "object_id",
+            "is_primary",
+            "coverage_start",
+            "coverage_end",
+            "scope_notes",
+            "tags",
+        ]
+        widgets = {
+            "coverage_start": forms.DateInput(attrs={"type": "date"}),
+            "coverage_end": forms.DateInput(attrs={"type": "date"}),
+        }
 
 
 class ContractAssignmentFilterForm(NautobotFilterForm):

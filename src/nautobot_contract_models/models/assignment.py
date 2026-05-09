@@ -53,6 +53,34 @@ class ContractAssignment(PrimaryModel):
     object_id = models.UUIDField(help_text="UUID PK of the target object — every Nautobot model uses UUID PKs.")
     object = GenericForeignKey("content_type", "object_id")
 
+    # --- Phase 7 per-assignment scope ---
+    coverage_start = models.DateField(
+        null=True,
+        blank=True,
+        help_text="When coverage of this target begins. Null = follows the contract's start_date.",
+    )
+    coverage_end = models.DateField(
+        null=True,
+        blank=True,
+        help_text=(
+            "When coverage of this target ends. Null = follows the contract's end_date. "
+            "Useful for mid-term additions/removals."
+        ),
+    )
+    scope_notes = models.CharField(
+        max_length=255,
+        blank=True,
+        help_text="Optional scope qualifier (e.g. 'chassis only, not modules'; 'firmware updates excluded').",
+    )
+    is_primary = models.BooleanField(
+        default=False,
+        help_text=(
+            "When the same target is covered by multiple contracts, this flag picks "
+            "the primary one for display / on-call routing."
+        ),
+    )
+    # --- end Phase 7 ---
+
     class Meta:
         """Model metadata."""
 

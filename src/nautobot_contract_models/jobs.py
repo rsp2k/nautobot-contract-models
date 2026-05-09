@@ -15,8 +15,10 @@ into Slack / email / PagerDuty.
 from datetime import date, timedelta
 
 from django.conf import settings
-from nautobot.apps.jobs import BooleanVar, IntegerVar, Job, register_jobs
+from nautobot.apps.jobs import BooleanVar, IntegerVar, Job, ObjectVar, register_jobs
+from nautobot.dcim.models import Device, Location
 
+from nautobot_contract_models.helpers import has_active_coverage
 from nautobot_contract_models.models import Contract
 
 NAME = "Contracts"
@@ -91,14 +93,36 @@ class RenewalCheckJob(Job):
         count = 0
         for contract in qs:
             days_remaining = (contract.end_date - today).days
-            level = self.logger.warning if days_remaining <= 7 else self.logger.info
+
+            # If a notice period is set, the actionable date is end_date - notice_period_days.
+            # Once we're inside the notice window, urgency jumps regardless of days_remaining.
+            notice_window = contract.notice_period_days or 0
+            days_to_notice = days_remaining - notice_window
+            in_notice_window = notice_window > 0 and days_to_notice <= 0
+
+            # Severity rubric:
+            #   - in notice window for an auto-renewing contract: WARNING (action needed to avoid lock-in)
+            #   - <= 7 days remaining: WARNING
+            #   - everything else: INFO
+            if (in_notice_window and contract.auto_renew) or days_remaining <= 7:
+                level = self.logger.warning
+            else:
+                level = self.logger.info
+
+            extra_msg = ""
+            if notice_window > 0:
+                extra_msg = f" Notice deadline in {days_to_notice} day(s)."
+            if contract.auto_renew:
+                extra_msg += " Auto-renew is ON."
+
             level(
-                "Contract '%s' (provider=%s) expires %s — %d day(s) %s.",
+                "Contract '%s' (provider=%s) expires %s — %d day(s) %s.%s",
                 contract.name,
                 contract.provider.name,
                 contract.end_date,
                 abs(days_remaining),
                 "remaining" if days_remaining >= 0 else "ago",
+                extra_msg,
                 extra={"object": contract},
             )
             count += 1
@@ -111,4 +135,64 @@ class RenewalCheckJob(Job):
         return count
 
 
-register_jobs(RenewalCheckJob)
+class CoverageGapJob(Job):
+    """Find Devices with no active contract coverage and log each one.
+
+    Walks the configured Devices (optionally filtered by Location) and uses
+    the transitive coverage helper — so a Device is "covered" if it OR its
+    Location OR its Tenant (etc.) has any active ContractAssignment today.
+
+    Read-only. Logs one entry per uncovered Device at WARNING level so a
+    JobLogEntry webhook can route the list into Slack / email / a ticket.
+    """
+
+    location = ObjectVar(
+        model=Location,
+        required=False,
+        description=(
+            "If set, restrict the report to Devices at this Location "
+            "(descendants are NOT walked — set this to a leaf location for a focused report)."
+        ),
+    )
+
+    class Meta:
+        """Job metadata."""
+
+        name = "Find devices without contract coverage"
+        description = (
+            "Walk Devices and report each one with no active contract coverage (direct or via Tenant/Location)."
+        )
+        grouping = NAME
+        has_sensitive_variables = False
+
+    def run(self, location=None):
+        """Walk Devices, log each one without active coverage. Returns the count."""
+        qs = Device.objects.select_related("location", "tenant")
+        if location is not None:
+            qs = qs.filter(location=location)
+        qs = qs.order_by("location__name", "name")
+
+        uncovered = 0
+        scanned = 0
+        for device in qs:
+            scanned += 1
+            if has_active_coverage(device):
+                continue
+            uncovered += 1
+            self.logger.warning(
+                "Device '%s' (location=%s, tenant=%s) has no active contract coverage.",
+                device.name,
+                device.location.name if device.location else "—",
+                device.tenant.name if device.tenant else "—",
+                extra={"object": device},
+            )
+
+        self.logger.info(
+            "Coverage gap scan complete: %d of %d device(s) lack coverage.",
+            uncovered,
+            scanned,
+        )
+        return uncovered
+
+
+register_jobs(RenewalCheckJob, CoverageGapJob)

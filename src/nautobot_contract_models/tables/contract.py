@@ -20,6 +20,10 @@ class ContractTable(StatusTableMixin, BaseTable):
     tenant = tables.LinkColumn()
     end_date = tables.Column()
     start_date = tables.Column()
+    contract_type = tables.Column()
+    coverage_hours = tables.Column()
+    response_time = tables.Column()
+    auto_renew = tables.BooleanColumn()
     recurring_cost = tables.Column()
     one_time_cost = tables.Column()
     currency = tables.Column()
@@ -39,6 +43,10 @@ class ContractTable(StatusTableMixin, BaseTable):
             "provider",
             "tenant",
             "status",
+            "contract_type",
+            "coverage_hours",
+            "response_time",
+            "auto_renew",
             "start_date",
             "end_date",
             "recurring_cost",
@@ -54,6 +62,7 @@ class ContractTable(StatusTableMixin, BaseTable):
             "name",
             "provider",
             "status",
+            "contract_type",
             "end_date",
             "recurring_cost",
             "currency",

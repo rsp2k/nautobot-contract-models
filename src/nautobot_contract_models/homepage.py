@@ -17,7 +17,9 @@ from datetime import date, timedelta
 
 from django.conf import settings
 from nautobot.apps.ui import HomePagePanel
+from nautobot.dcim.models import Device
 
+from nautobot_contract_models.helpers import has_active_coverage
 from nautobot_contract_models.models import Contract
 
 
@@ -42,6 +44,26 @@ def get_upcoming_renewals(request):
     )
 
 
+def get_uncovered_devices(request):
+    """Return up to 10 Devices with no active contract coverage.
+
+    Uses the transitive helper — a Device with a Tenant- or Location-level
+    contract assignment counts as covered even if it has no direct
+    assignment of its own. Restricted to Devices the user can view.
+    """
+    qs = Device.objects.restrict(request.user, "view").select_related("location", "tenant").order_by("name")
+    # Naive Python-side filter — fine for the dashboard's first-10 cap.
+    # A more scalable version would push the existence check into SQL via a
+    # subquery; keep this simple until operators report dashboard slowness.
+    uncovered = []
+    for device in qs.iterator():
+        if not has_active_coverage(device):
+            uncovered.append(device)
+            if len(uncovered) >= 10:
+                break
+    return uncovered
+
+
 layout = (
     HomePagePanel(
         name="Contracts",
@@ -49,5 +71,12 @@ layout = (
         permissions=["nautobot_contract_models.view_contract"],
         custom_data={"upcoming_renewals": get_upcoming_renewals},
         custom_template="upcoming_renewals_panel.html",
+    ),
+    HomePagePanel(
+        name="Coverage Gaps",
+        weight=1510,
+        permissions=["dcim.view_device"],
+        custom_data={"uncovered_devices": get_uncovered_devices},
+        custom_template="uncovered_devices_panel.html",
     ),
 )

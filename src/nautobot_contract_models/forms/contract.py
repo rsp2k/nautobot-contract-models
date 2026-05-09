@@ -14,6 +14,11 @@ from nautobot.apps.forms import (
 )
 from nautobot.tenancy.models import Tenant
 
+from nautobot_contract_models.choices import (
+    ContractTypeChoices,
+    CoverageHoursChoices,
+    ResponseTimeChoices,
+)
 from nautobot_contract_models.models import Contract, ServiceProvider
 
 
@@ -33,8 +38,15 @@ class ContractForm(NautobotModelForm):
             "provider",
             "tenant",
             "status",
+            "contract_type",
             "start_date",
             "end_date",
+            "term_months",
+            "auto_renew",
+            "notice_period_days",
+            "coverage_hours",
+            "response_time",
+            "restoration_time",
             "renewal_terms",
             "recurring_cost",
             "one_time_cost",
@@ -59,6 +71,10 @@ class ContractFilterForm(StatusModelFilterFormMixin, NautobotFilterForm):
     provider = DynamicModelMultipleChoiceField(queryset=ServiceProvider.objects.all(), required=False)
     tenant = DynamicModelMultipleChoiceField(queryset=Tenant.objects.all(), required=False)
     currency = forms.CharField(required=False)
+    contract_type = forms.MultipleChoiceField(choices=ContractTypeChoices, required=False)
+    coverage_hours = forms.MultipleChoiceField(choices=CoverageHoursChoices, required=False)
+    response_time = forms.MultipleChoiceField(choices=ResponseTimeChoices, required=False)
+    auto_renew = forms.NullBooleanField(required=False)
 
 
 class ContractBulkEditForm(StatusModelBulkEditFormMixin, TagsBulkEditFormMixin, NautobotBulkEditForm):

@@ -1,0 +1,40 @@
+{% comment %}
+"Coverage Gaps" home dashboard panel — Devices with no active contract
+coverage (direct or via Tenant / Location). Helps procurement and ops
+teams catch the "we forgot to add the new datacenter to support" failure
+mode before something breaks at 2am.
+
+Context variables (from homepage.py):
+- uncovered_devices: list of Device objects, soonest-listed first, capped at 10.
+{% endcomment %}
+
+{% if uncovered_devices and perms.dcim.view_device %}
+    {% for device in uncovered_devices %}
+        <div class="list-group-item">
+            <a href="{{ device.get_absolute_url }}">
+                {{ device.name|default:"(unnamed device)" }}
+            </a>
+            <span class="float-end text-secondary">
+                {% if device.location %}{{ device.location.name }}{% else %}—{% endif %}
+            </span>
+            <br>
+            <small class="text-secondary">
+                {% if device.device_type %}{{ device.device_type.model }}{% endif %}
+                {% if device.tenant %} &middot; {{ device.tenant.name }}{% endif %}
+            </small>
+        </div>
+        {% if forloop.last %}
+            <div class="list-group-item text-end">
+                <a href="{% url 'dcim:device_list' %}">View all devices</a>
+            </div>
+        {% endif %}
+    {% endfor %}
+{% elif perms.dcim.view_device %}
+    <div class="card-body text-secondary">
+        All devices have active coverage.
+    </div>
+{% else %}
+    <div class="card-body text-secondary">
+        <span class="mdi mdi-lock" aria-hidden="true"></span> No permission
+    </div>
+{% endif %}

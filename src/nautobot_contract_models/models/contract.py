@@ -8,6 +8,13 @@ from nautobot.core.models.generics import PrimaryModel
 from nautobot.extras.models.statuses import StatusField
 from nautobot.extras.utils import extras_features
 
+from nautobot_contract_models.choices import (
+    ContractTypeChoices,
+    CoverageHoursChoices,
+    ResponseTimeChoices,
+    RestorationTimeChoices,
+)
+
 
 @extras_features(
     "custom_fields",
@@ -78,6 +85,50 @@ class Contract(PrimaryModel):
     )
     description = models.CharField(max_length=200, blank=True)
     comments = models.TextField(blank=True)
+
+    # --- Phase 7 SLA / contract-shape structure ---
+    contract_type = models.CharField(
+        max_length=30,
+        choices=ContractTypeChoices,
+        blank=True,
+        help_text="Category of agreement (drives default renewal priority and dashboard grouping).",
+    )
+    coverage_hours = models.CharField(
+        max_length=30,
+        choices=CoverageHoursChoices,
+        blank=True,
+        help_text="When the vendor is contractually available to take a support call.",
+    )
+    response_time = models.CharField(
+        max_length=30,
+        choices=ResponseTimeChoices,
+        blank=True,
+        help_text="Vendor's contractual response-time SLA.",
+    )
+    restoration_time = models.CharField(
+        max_length=30,
+        choices=RestorationTimeChoices,
+        blank=True,
+        help_text="Vendor's contractual time-to-restore SLA. Distinct from response time.",
+    )
+    notice_period_days = models.PositiveSmallIntegerField(
+        null=True,
+        blank=True,
+        help_text=(
+            "Days before end_date by which a cancellation notice must be served (e.g. 60). "
+            "Used by the renewal Job to alert earlier."
+        ),
+    )
+    auto_renew = models.BooleanField(
+        default=False,
+        help_text="Does this contract auto-renew if no notice is served? Affects renewal-Job urgency.",
+    )
+    term_months = models.PositiveSmallIntegerField(
+        null=True,
+        blank=True,
+        help_text="Original term length in months (12, 24, 36...). Null = perpetual or month-to-month.",
+    )
+    # --- end Phase 7 ---
 
     # Required by Nautobot's natural_slug / natural_key machinery (used by
     # detail views, REST API URL stability, and import/export matching).
