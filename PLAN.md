@@ -107,13 +107,21 @@ query for `contracts` works.
 
 **Acceptance:** `nautobot-server runjob nautobot_contract_models.jobs.RenewalCheckJob` produces output. A scheduled-job entry runs it nightly. The dashboard panel surfaces upcoming renewals on the home page.
 
-### Phase 6 — Documentation pass (~half session)
+### Phase 6 — Documentation pass (~half session) — DONE
 
-- README.md with mapping table, models, REST/GraphQL usage examples
-- Limitations section (be honest about Nautobot version compat, what netbox-contract has that we don't, etc.)
-- development/README.md with bringup steps + the same gotchas the operator has hit before
-- A short "Migrating from netbox-contract" doc IF that's a goal — likely not v1, but worth a stub
-- Memory file in `~/.claude/projects/-home-rpm-claude-nautobot-nautobot-contract-models/memory/` capturing project goals + conventions
+- ✅ README.md with mapping table, models, REST/GraphQL usage examples,
+  install/config/Limitations sections, dev-stack pointer
+- ✅ development/README.md updated with the six gotchas hit during the
+  build (compose project name, volume permissions, worker-restart for
+  jobs.py, jobs-disabled-by-default, makemigrations-uid-mismatch,
+  ContentType timing in initial data migrations)
+- ✅ docs/ directory with API / GraphQL / Jobs reference docs
+  containing curl + jq examples operators can copy-paste
+- ✅ Memory entries at
+  `~/.claude/projects/-home-rpm-claude-nautobot-nautobot-contract-models/memory/`
+  capture every non-obvious gotcha hit during the build (8 feedback
+  files + 1 project-state file) so future Nautobot plugins start with
+  the lessons baked in
 
 ## Tech-stack decisions (final, don't relitigate)
 
