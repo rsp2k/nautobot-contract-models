@@ -241,6 +241,73 @@ def _add_months(year, month, delta):
     return year + total // 12, (total % 12) + 1
 
 
+def take_snapshot(*, on_date=None):
+    """Persist a CostSnapshot row per currency for ``on_date`` (default today).
+
+    Idempotent on (snapshot_date, currency): re-running the same day
+    updates the existing row rather than creating a duplicate. The
+    coverage_gap_count is captured on the alphabetically-first currency
+    so the column carries one value per date — null on the others.
+
+    Returns the list of saved snapshots so callers (the Job) can log
+    what was captured.
+    """
+    if on_date is None:
+        on_date = date.today()
+
+    # Local import: keeps cost.py importable without the model being
+    # registered (e.g. during early module-loading or in mock-heavy tests).
+    from nautobot_contract_models.models import CostSnapshot
+
+    burn = burn_rate_by_currency(on_date=on_date)
+    renewal = renewal_cost_in_window(90, on_date=on_date)
+
+    # Active-contract count per currency (separate from burn since
+    # burn excludes one_time but the count should include them as
+    # "active in the books").
+    counts_by_currency = defaultdict(int)
+    for contract in _active_contracts_qs(on_date).only("currency"):
+        counts_by_currency[contract.currency] += 1
+
+    # Capture a single coverage-gap count and attach it to whichever
+    # currency sorts first; the column is nullable on the others.
+    gap_count = coverage_gap_count()
+    currencies = sorted(set(burn) | set(renewal) | set(counts_by_currency))
+    snapshots = []
+    for idx, currency in enumerate(currencies):
+        snap, _ = CostSnapshot.objects.update_or_create(
+            snapshot_date=on_date,
+            currency=currency,
+            defaults={
+                "monthly_burn": burn.get(currency, ZERO),
+                "renewal_90d": renewal.get(currency, ZERO),
+                "active_contract_count": counts_by_currency.get(currency, 0),
+                "coverage_gap_count": gap_count if idx == 0 else None,
+            },
+        )
+        snapshots.append(snap)
+    return snapshots
+
+
+def history(*, weeks=12, currency=None, on_date=None):
+    """Return CostSnapshot rows from the past ``weeks`` weeks, ordered oldest first.
+
+    Optionally filtered to one ``currency`` so callers driving a
+    sparkline don't have to post-filter. Caller can pass ``on_date`` to
+    anchor a different "today" (useful for tests).
+    """
+    if on_date is None:
+        on_date = date.today()
+
+    from nautobot_contract_models.models import CostSnapshot
+
+    cutoff = on_date - timedelta(weeks=weeks)
+    qs = CostSnapshot.objects.filter(snapshot_date__gte=cutoff, snapshot_date__lte=on_date)
+    if currency is not None:
+        qs = qs.filter(currency=currency)
+    return list(qs.order_by("snapshot_date", "currency"))
+
+
 def coverage_gap_count():
     """Lightweight count of Devices that have no direct ContractAssignment.
 

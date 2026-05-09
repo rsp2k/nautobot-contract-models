@@ -264,4 +264,47 @@ class CostReportJob(Job):
         }
 
 
-register_jobs(RenewalCheckJob, CoverageGapJob, CostReportJob)
+class CostHistoryJob(Job):
+    """Persist a CostSnapshot per currency for today's date.
+
+    Operators schedule this weekly. Each run creates (or refreshes)
+    snapshot rows that drive the cost-history visualization. Re-running
+    the same day is idempotent — the unique (snapshot_date, currency)
+    constraint plus update_or_create means duplicates can't accumulate.
+
+    Distinct from CostReportJob: CostReportJob writes to JobLogEntry
+    (ephemeral, search-but-not-queryable). CostHistoryJob writes to
+    a real model so we can render time-series UI.
+    """
+
+    class Meta:
+        """Job metadata."""
+
+        name = "Capture cost history snapshot"
+        description = "Persist a per-currency CostSnapshot row for today's burn / renewal / contract count."
+        grouping = NAME
+        has_sensitive_variables = False
+
+    def run(self):
+        """Take a snapshot and log one INFO line per currency captured."""
+        snapshots = cost.take_snapshot()
+
+        if not snapshots:
+            self.logger.info("No active contracts — no snapshot rows created.")
+            return 0
+
+        for snap in snapshots:
+            self.logger.info(
+                "Snapshot %s %s: monthly_burn=%s · renewal_90d=%s · contracts=%d",
+                snap.snapshot_date,
+                snap.currency,
+                snap.monthly_burn,
+                snap.renewal_90d,
+                snap.active_contract_count,
+                extra={"object": snap},
+            )
+        self.logger.info("Captured %d snapshot row(s) for %s.", len(snapshots), snapshots[0].snapshot_date)
+        return len(snapshots)
+
+
+register_jobs(RenewalCheckJob, CoverageGapJob, CostReportJob, CostHistoryJob)

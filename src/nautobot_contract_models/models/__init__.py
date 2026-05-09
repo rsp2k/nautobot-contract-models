@@ -14,11 +14,13 @@ from .attachment import ContractAttachment, InvoiceAttachment
 from .contract import Contract
 from .invoice import Invoice
 from .provider import ServiceProvider
+from .snapshot import CostSnapshot
 
 __all__ = [
     "Contract",
     "ContractAssignment",
     "ContractAttachment",
+    "CostSnapshot",
     "Invoice",
     "InvoiceAttachment",
     "ServiceProvider",

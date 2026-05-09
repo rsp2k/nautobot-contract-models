@@ -1,0 +1,204 @@
+/*
+ * Cost History styles — Phase 13.
+ *
+ * Three line charts, one per metric. Each currency gets its own hue
+ * via the --ch-hue custom property (0-360). Default amber (35); other
+ * currencies cycle through teal/green/indigo. Lines and dots use
+ * currentColor-style HSL so dark-mode adapts automatically.
+ */
+
+.contract-cost-history {
+    --ch-hue: 35;             /* default amber if not set per-element */
+    --ch-radius: 0.5rem;
+    margin: 1rem 0;
+}
+
+.ch-header h2 {
+    margin: 0 0 0.25rem 0;
+}
+
+.ch-subtitle {
+    color: var(--bs-secondary-color, #6c757d);
+    margin: 0 0 1rem 0;
+    max-width: 60ch;
+}
+
+.ch-window-form {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.5rem;
+    margin-bottom: 1rem;
+}
+
+.ch-window-form select {
+    padding: 0.25rem 0.5rem;
+    border-radius: var(--ch-radius);
+    border: 1px solid var(--bs-border-color, #dee2e6);
+    background: var(--bs-body-bg, #fff);
+    color: inherit;
+    font: inherit;
+}
+
+/* Currency legend ----------------------------------- */
+
+.ch-legend {
+    list-style: none;
+    display: flex;
+    gap: 1rem;
+    padding: 0;
+    margin: 0 0 1rem 0;
+    font-size: 0.85rem;
+}
+
+.ch-legend-item {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.4rem;
+}
+
+.ch-legend-swatch {
+    display: inline-block;
+    width: 0.85rem;
+    height: 0.85rem;
+    border-radius: 50%;
+    background: hsl(var(--ch-hue, 35), 80%, 50%);
+}
+
+.ch-legend-label {
+    font-variant-numeric: tabular-nums;
+    font-weight: 500;
+}
+
+/* Chart card --------------------------------------- */
+
+.ch-chart {
+    margin-bottom: 2rem;
+    padding: 1rem;
+    background: var(--bs-body-bg, #fff);
+    border: 1px solid var(--bs-border-color, #dee2e6);
+    border-radius: var(--ch-radius);
+}
+
+.ch-chart-heading {
+    margin: 0 0 0.75rem 0;
+    font-size: 1rem;
+    font-weight: 600;
+}
+
+.ch-chart-empty {
+    color: var(--bs-secondary-color, #6c757d);
+    margin: 0;
+    padding: 1rem 0;
+    text-align: center;
+    font-size: 0.85rem;
+}
+
+.ch-svg {
+    display: block;
+    width: 100%;
+    height: 160px;
+    overflow: visible;
+}
+
+.ch-baseline {
+    stroke: var(--bs-border-color, #dee2e6);
+    stroke-width: 1;
+    stroke-dasharray: 2 4;
+}
+
+.ch-line {
+    stroke: hsl(var(--ch-hue, 35), 80%, 50%);
+    stroke-width: 2;
+    fill: none;
+    stroke-linecap: round;
+    stroke-linejoin: round;
+}
+
+.ch-dot {
+    fill: hsl(var(--ch-hue, 35), 80%, 45%);
+    stroke: var(--bs-body-bg, #fff);
+    stroke-width: 1.5;
+}
+
+[data-bs-theme="dark"] .ch-dot {
+    fill: hsl(var(--ch-hue, 35), 80%, 60%);
+    stroke: var(--bs-body-bg, #1c1f25);
+}
+
+[data-bs-theme="dark"] .ch-line {
+    stroke: hsl(var(--ch-hue, 35), 80%, 60%);
+}
+
+/* Axis labels & latest values --------------------- */
+
+.ch-chart-axis {
+    display: flex;
+    justify-content: space-between;
+    margin: 0.5rem 0 0;
+    font-size: 0.75rem;
+    color: var(--bs-secondary-color, #6c757d);
+    font-variant-numeric: tabular-nums;
+}
+
+.ch-chart-max {
+    font-weight: 500;
+}
+
+.ch-chart-latest {
+    list-style: none;
+    display: flex;
+    flex-wrap: wrap;
+    gap: 1rem;
+    padding: 0.75rem 0 0;
+    margin: 0;
+    border-top: 1px solid var(--bs-border-color, #dee2e6);
+}
+
+.ch-chart-latest li {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.4rem;
+    font-size: 0.85rem;
+}
+
+.ch-latest-value {
+    font-weight: 600;
+    font-variant-numeric: tabular-nums;
+}
+
+.ch-latest-label {
+    color: var(--bs-secondary-color, #6c757d);
+    font-size: 0.7rem;
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+}
+
+/* Empty state ---------------------------------- */
+
+.ch-empty {
+    padding: 2.5rem;
+    background: var(--bs-tertiary-bg, #f8f9fa);
+    border-radius: var(--ch-radius);
+    text-align: center;
+    color: var(--bs-secondary-color, #6c757d);
+}
+
+.ch-empty p {
+    margin: 0 0 0.5rem 0;
+}
+
+/* Print --------------------------------------- */
+
+@media print {
+    .ch-window-form {
+        display: none;
+    }
+    .ch-chart {
+        page-break-inside: avoid;
+    }
+    .ch-line,
+    .ch-dot {
+        stroke: #000 !important;
+        fill: #000 !important;
+    }
+}

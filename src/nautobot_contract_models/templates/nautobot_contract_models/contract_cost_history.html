@@ -1,0 +1,126 @@
+{% extends 'base.html' %}
+{% load static %}
+{% comment %}
+Cost History — Phase 13.
+
+Three line charts: monthly burn rate, 90-day renewal forecast, active
+contract count. One line per currency, hue from currency_hues map.
+
+Why three separate charts rather than one with multiple y-axes:
+    Different units mean different y-scales — combining them on one
+    plot either lies (about magnitudes) or invites confusion. One
+    chart per metric keeps interpretation honest.
+
+Why inline SVG rather than a chart library:
+    Zero JS dependency, prints natively, plays well with dark mode
+    via currentColor. A 12-week × 2-currency series is small enough
+    that hand-rolled paths are fine.
+
+Context (from views/cost_history.py):
+    empty            — bool; if True, render an empty state
+    weeks            — query window length
+    snapshot_count   — total snapshot rows in the window
+    today            — date.today() for "as of" label
+    charts           — list of {label, unit, series, value_max, date_min, date_max}
+                       each series item: {currency, hue, path_d, points, latest_value}
+    currencies       — sorted list of currencies present
+    currency_hues    — dict[currency → HSL hue 0-360]
+    chart_w, chart_h — SVG viewBox dimensions
+{% endcomment %}
+
+{% block title %}Cost History{% endblock %}
+
+{% block extra_styles %}
+<link rel="stylesheet" href="{% static 'nautobot_contract_models/contract_cost_history.css' %}">
+{% endblock %}
+
+{% block content %}
+<div class="contract-cost-history">
+    <header class="ch-header">
+        <h2>Cost History</h2>
+        <p class="ch-subtitle">
+            Trend of monthly burn, 90-day renewal forecast, and active contract count
+            over the past {{ weeks }} weeks.
+            {% if not empty %}
+                {{ snapshot_count }} snapshot{{ snapshot_count|pluralize }} captured.
+            {% endif %}
+        </p>
+        <form class="ch-window-form" method="get">
+            <label for="ch-weeks">Window:</label>
+            <select id="ch-weeks" name="weeks" onchange="this.form.submit()">
+                <option value="4" {% if weeks == 4 %}selected{% endif %}>4 weeks</option>
+                <option value="12" {% if weeks == 12 %}selected{% endif %}>12 weeks</option>
+                <option value="26" {% if weeks == 26 %}selected{% endif %}>26 weeks</option>
+                <option value="52" {% if weeks == 52 %}selected{% endif %}>52 weeks</option>
+            </select>
+        </form>
+    </header>
+
+    {% if empty %}
+        <div class="ch-empty">
+            <p><strong>No snapshots yet.</strong></p>
+            <p>
+                Run the <em>Capture cost history snapshot</em> Job (under <strong>Jobs → Contracts</strong>)
+                to start collecting data, or schedule it weekly so the trend builds itself.
+            </p>
+        </div>
+    {% else %}
+        {% if currency_legend %}
+            <ul class="ch-legend" aria-label="Currency legend">
+                {% for currency, hue in currency_legend %}
+                    <li class="ch-legend-item">
+                        <span class="ch-legend-swatch" style="--ch-hue: {{ hue }};" aria-hidden="true"></span>
+                        <span class="ch-legend-label">{{ currency }}</span>
+                    </li>
+                {% endfor %}
+            </ul>
+        {% endif %}
+
+        {% for chart in charts %}
+            <section class="ch-chart" aria-labelledby="ch-{{ forloop.counter }}-heading">
+                <h3 id="ch-{{ forloop.counter }}-heading" class="ch-chart-heading">
+                    {{ chart.label }}
+                </h3>
+                {% if chart.empty %}
+                    <p class="ch-chart-empty">No data for this metric yet.</p>
+                {% else %}
+                    <svg class="ch-svg" viewBox="0 0 {{ chart_w }} {{ chart_h }}" preserveAspectRatio="none" role="img"
+                         aria-label="{{ chart.label }} from {{ chart.date_min|date:'SHORT_DATE_FORMAT' }} to {{ chart.date_max|date:'SHORT_DATE_FORMAT' }}; max {{ chart.value_max }}">
+                        <!-- Baseline grid line at 0 -->
+                        <line x1="0" y1="{{ chart_h|add:'-8' }}" x2="{{ chart_w }}" y2="{{ chart_h|add:'-8' }}"
+                              class="ch-baseline" />
+                        {% for s in chart.series %}
+                            <path d="{{ s.path_d }}"
+                                  class="ch-line"
+                                  style="--ch-hue: {{ s.hue }};"
+                                  fill="none" />
+                            {% for x, y in s.points %}
+                                <circle cx="{{ x|floatformat:1 }}" cy="{{ y|floatformat:1 }}" r="2.5"
+                                        class="ch-dot"
+                                        style="--ch-hue: {{ s.hue }};">
+                                    <title>{{ s.currency }}: {{ s.latest_value }}</title>
+                                </circle>
+                            {% endfor %}
+                        {% endfor %}
+                    </svg>
+                    <div class="ch-chart-axis">
+                        <span>{{ chart.date_min|date:"M j" }}</span>
+                        <span class="ch-chart-max">max ≈ {{ chart.value_max|floatformat:0 }}{{ chart.unit }}</span>
+                        <span>{{ chart.date_max|date:"M j" }}</span>
+                    </div>
+                    <ul class="ch-chart-latest">
+                        {% for s in chart.series %}
+                            <li>
+                                <span class="ch-legend-swatch" style="--ch-hue: {{ s.hue }};" aria-hidden="true"></span>
+                                <strong>{{ s.currency }}</strong>
+                                <span class="ch-latest-value">{{ s.latest_value }}</span>
+                                <span class="ch-latest-label">latest</span>
+                            </li>
+                        {% endfor %}
+                    </ul>
+                {% endif %}
+            </section>
+        {% endfor %}
+    {% endif %}
+</div>
+{% endblock %}

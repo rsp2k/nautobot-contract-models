@@ -80,6 +80,11 @@ menu_items = (
                         name="Renewal Calendar",
                         permissions=["nautobot_contract_models.view_contract"],
                     ),
+                    NavMenuItem(
+                        link="plugins:nautobot_contract_models:contract_cost_history",
+                        name="Cost History",
+                        permissions=["nautobot_contract_models.view_contract"],
+                    ),
                 ),
             ),
         ),

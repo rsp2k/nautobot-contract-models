@@ -15,6 +15,7 @@ from nautobot_contract_models.views import (
     ContractActionRequiredView,
     ContractAssignmentUIViewSet,
     ContractAttachmentUIViewSet,
+    ContractCostHistoryView,
     ContractRenewalCalendarView,
     ContractUIViewSet,
     InvoiceAttachmentUIViewSet,
@@ -48,5 +49,10 @@ urlpatterns = [
         "reports/action-required/",
         ContractActionRequiredView.as_view(),
         name="contract_action_required",
+    ),
+    path(
+        "reports/cost-history/",
+        ContractCostHistoryView.as_view(),
+        name="contract_cost_history",
     ),
 ] + router.urls
