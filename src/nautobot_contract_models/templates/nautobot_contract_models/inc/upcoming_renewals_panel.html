@@ -1,0 +1,44 @@
+{% comment %}
+"Upcoming Renewals" home dashboard panel — renders the same data the
+RenewalCheckJob produces, but at-a-glance with click-through links.
+
+Context variables (from homepage.py):
+- upcoming_renewals: queryset of Contract objects, end_date within the
+  configured window, soonest first, capped at 10.
+{% endcomment %}
+{% load helpers %}
+
+{% if upcoming_renewals and perms.nautobot_contract_models.view_contract %}
+    {% for contract in upcoming_renewals %}
+        <div class="list-group-item">
+            <a href="{{ contract.get_absolute_url }}">
+                {{ contract.name }}
+            </a>
+            <span class="float-end text-secondary">
+                {{ contract.end_date|date:"SHORT_DATE_FORMAT" }}
+            </span>
+            <br>
+            <small class="text-secondary">
+                {{ contract.provider.name }}
+                {% if contract.recurring_cost %}
+                    &middot; {{ contract.recurring_cost }} {{ contract.currency }}
+                {% endif %}
+            </small>
+        </div>
+        {% if forloop.last %}
+            <div class="list-group-item text-end">
+                <a href="{% url 'plugins:nautobot_contract_models:contract_list' %}">
+                    View all contracts
+                </a>
+            </div>
+        {% endif %}
+    {% endfor %}
+{% elif perms.nautobot_contract_models.view_contract %}
+    <div class="card-body text-secondary">
+        No contracts expiring soon.
+    </div>
+{% else %}
+    <div class="card-body text-secondary">
+        <span class="mdi mdi-lock" aria-hidden="true"></span> No permission
+    </div>
+{% endif %}
