@@ -1,0 +1,23 @@
+# Read the Docs configuration file
+# https://docs.readthedocs.io/en/stable/config-file/v2.html
+#
+# This project uses uv (not poetry like the reference Nautobot apps).
+# The docs build group is exposed via [project.optional-dependencies].docs
+# in pyproject.toml — RTD installs that extra and runs `mkdocs build`.
+
+version: 2
+
+build:
+  os: "ubuntu-lts-latest"
+  tools:
+    python: "3.12"
+  jobs:
+    # Install just the docs extra. We use pip rather than uv on RTD because
+    # RTD's environment caching is tuned for pip; the docs build is fast
+    # enough that uv's speed advantage doesn't matter here.
+    post_install:
+      - "pip install '.[docs]'"
+
+mkdocs:
+  configuration: "mkdocs.yml"
+  fail_on_warning: true

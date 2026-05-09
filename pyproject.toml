@@ -39,7 +39,10 @@ docs = [
 ]
 
 [project.urls]
-Homepage = "https://github.com/rsp/nautobot-contract-models"
+Homepage = "https://github.com/rsp2k/nautobot-contract-models"
+Documentation = "https://nautobot-contract-models.readthedocs.io/"
+Issues = "https://github.com/rsp2k/nautobot-contract-models/issues"
+Source = "https://github.com/rsp2k/nautobot-contract-models"
 
 [tool.hatch.build.targets.wheel]
 packages = ["src/nautobot_contract_models"]

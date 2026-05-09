@@ -1,119 +1,119 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
     <url>
-         <loc>https://docs.nautobot.com/projects/nautobot-contract-models/en/latest/</loc>
+         <loc>https://nautobot-contract-models.readthedocs.io/en/latest/</loc>
          <lastmod>2026-05-09</lastmod>
     </url>
     <url>
-         <loc>https://docs.nautobot.com/projects/nautobot-contract-models/en/latest/admin/compatibility_matrix/</loc>
+         <loc>https://nautobot-contract-models.readthedocs.io/en/latest/admin/compatibility_matrix/</loc>
          <lastmod>2026-05-09</lastmod>
     </url>
     <url>
-         <loc>https://docs.nautobot.com/projects/nautobot-contract-models/en/latest/admin/install/</loc>
+         <loc>https://nautobot-contract-models.readthedocs.io/en/latest/admin/install/</loc>
          <lastmod>2026-05-09</lastmod>
     </url>
     <url>
-         <loc>https://docs.nautobot.com/projects/nautobot-contract-models/en/latest/admin/uninstall/</loc>
+         <loc>https://nautobot-contract-models.readthedocs.io/en/latest/admin/uninstall/</loc>
          <lastmod>2026-05-09</lastmod>
     </url>
     <url>
-         <loc>https://docs.nautobot.com/projects/nautobot-contract-models/en/latest/admin/upgrade/</loc>
+         <loc>https://nautobot-contract-models.readthedocs.io/en/latest/admin/upgrade/</loc>
          <lastmod>2026-05-09</lastmod>
     </url>
     <url>
-         <loc>https://docs.nautobot.com/projects/nautobot-contract-models/en/latest/admin/release_notes/</loc>
+         <loc>https://nautobot-contract-models.readthedocs.io/en/latest/admin/release_notes/</loc>
          <lastmod>2026-05-09</lastmod>
     </url>
     <url>
-         <loc>https://docs.nautobot.com/projects/nautobot-contract-models/en/latest/admin/release_notes/version_2026.5.9/</loc>
+         <loc>https://nautobot-contract-models.readthedocs.io/en/latest/admin/release_notes/version_2026.5.9/</loc>
          <lastmod>2026-05-09</lastmod>
     </url>
     <url>
-         <loc>https://docs.nautobot.com/projects/nautobot-contract-models/en/latest/dev/contributing/</loc>
+         <loc>https://nautobot-contract-models.readthedocs.io/en/latest/dev/contributing/</loc>
          <lastmod>2026-05-09</lastmod>
     </url>
     <url>
-         <loc>https://docs.nautobot.com/projects/nautobot-contract-models/en/latest/dev/dev_environment/</loc>
+         <loc>https://nautobot-contract-models.readthedocs.io/en/latest/dev/dev_environment/</loc>
          <lastmod>2026-05-09</lastmod>
     </url>
     <url>
-         <loc>https://docs.nautobot.com/projects/nautobot-contract-models/en/latest/dev/extending/</loc>
+         <loc>https://nautobot-contract-models.readthedocs.io/en/latest/dev/extending/</loc>
          <lastmod>2026-05-09</lastmod>
     </url>
     <url>
-         <loc>https://docs.nautobot.com/projects/nautobot-contract-models/en/latest/dev/release_checklist/</loc>
+         <loc>https://nautobot-contract-models.readthedocs.io/en/latest/dev/release_checklist/</loc>
          <lastmod>2026-05-09</lastmod>
     </url>
     <url>
-         <loc>https://docs.nautobot.com/projects/nautobot-contract-models/en/latest/dev/code_reference/</loc>
+         <loc>https://nautobot-contract-models.readthedocs.io/en/latest/dev/code_reference/</loc>
          <lastmod>2026-05-09</lastmod>
     </url>
     <url>
-         <loc>https://docs.nautobot.com/projects/nautobot-contract-models/en/latest/dev/code_reference/cost/</loc>
+         <loc>https://nautobot-contract-models.readthedocs.io/en/latest/dev/code_reference/cost/</loc>
          <lastmod>2026-05-09</lastmod>
     </url>
     <url>
-         <loc>https://docs.nautobot.com/projects/nautobot-contract-models/en/latest/dev/code_reference/coverage/</loc>
+         <loc>https://nautobot-contract-models.readthedocs.io/en/latest/dev/code_reference/coverage/</loc>
          <lastmod>2026-05-09</lastmod>
     </url>
     <url>
-         <loc>https://docs.nautobot.com/projects/nautobot-contract-models/en/latest/dev/code_reference/jobs/</loc>
+         <loc>https://nautobot-contract-models.readthedocs.io/en/latest/dev/code_reference/jobs/</loc>
          <lastmod>2026-05-09</lastmod>
     </url>
     <url>
-         <loc>https://docs.nautobot.com/projects/nautobot-contract-models/en/latest/dev/code_reference/models/</loc>
+         <loc>https://nautobot-contract-models.readthedocs.io/en/latest/dev/code_reference/models/</loc>
          <lastmod>2026-05-09</lastmod>
     </url>
     <url>
-         <loc>https://docs.nautobot.com/projects/nautobot-contract-models/en/latest/dev/code_reference/priority/</loc>
+         <loc>https://nautobot-contract-models.readthedocs.io/en/latest/dev/code_reference/priority/</loc>
          <lastmod>2026-05-09</lastmod>
     </url>
     <url>
-         <loc>https://docs.nautobot.com/projects/nautobot-contract-models/en/latest/models/contract/</loc>
+         <loc>https://nautobot-contract-models.readthedocs.io/en/latest/models/contract/</loc>
          <lastmod>2026-05-09</lastmod>
     </url>
     <url>
-         <loc>https://docs.nautobot.com/projects/nautobot-contract-models/en/latest/models/contractassignment/</loc>
+         <loc>https://nautobot-contract-models.readthedocs.io/en/latest/models/contractassignment/</loc>
          <lastmod>2026-05-09</lastmod>
     </url>
     <url>
-         <loc>https://docs.nautobot.com/projects/nautobot-contract-models/en/latest/models/contractattachment/</loc>
+         <loc>https://nautobot-contract-models.readthedocs.io/en/latest/models/contractattachment/</loc>
          <lastmod>2026-05-09</lastmod>
     </url>
     <url>
-         <loc>https://docs.nautobot.com/projects/nautobot-contract-models/en/latest/models/costsnapshot/</loc>
+         <loc>https://nautobot-contract-models.readthedocs.io/en/latest/models/costsnapshot/</loc>
          <lastmod>2026-05-09</lastmod>
     </url>
     <url>
-         <loc>https://docs.nautobot.com/projects/nautobot-contract-models/en/latest/models/invoice/</loc>
+         <loc>https://nautobot-contract-models.readthedocs.io/en/latest/models/invoice/</loc>
          <lastmod>2026-05-09</lastmod>
     </url>
     <url>
-         <loc>https://docs.nautobot.com/projects/nautobot-contract-models/en/latest/models/invoiceattachment/</loc>
+         <loc>https://nautobot-contract-models.readthedocs.io/en/latest/models/invoiceattachment/</loc>
          <lastmod>2026-05-09</lastmod>
     </url>
     <url>
-         <loc>https://docs.nautobot.com/projects/nautobot-contract-models/en/latest/models/serviceprovider/</loc>
+         <loc>https://nautobot-contract-models.readthedocs.io/en/latest/models/serviceprovider/</loc>
          <lastmod>2026-05-09</lastmod>
     </url>
     <url>
-         <loc>https://docs.nautobot.com/projects/nautobot-contract-models/en/latest/user/app_getting_started/</loc>
+         <loc>https://nautobot-contract-models.readthedocs.io/en/latest/user/app_getting_started/</loc>
          <lastmod>2026-05-09</lastmod>
     </url>
     <url>
-         <loc>https://docs.nautobot.com/projects/nautobot-contract-models/en/latest/user/app_overview/</loc>
+         <loc>https://nautobot-contract-models.readthedocs.io/en/latest/user/app_overview/</loc>
          <lastmod>2026-05-09</lastmod>
     </url>
     <url>
-         <loc>https://docs.nautobot.com/projects/nautobot-contract-models/en/latest/user/app_use_cases/</loc>
+         <loc>https://nautobot-contract-models.readthedocs.io/en/latest/user/app_use_cases/</loc>
          <lastmod>2026-05-09</lastmod>
     </url>
     <url>
-         <loc>https://docs.nautobot.com/projects/nautobot-contract-models/en/latest/user/external_interactions/</loc>
+         <loc>https://nautobot-contract-models.readthedocs.io/en/latest/user/external_interactions/</loc>
          <lastmod>2026-05-09</lastmod>
     </url>
     <url>
-         <loc>https://docs.nautobot.com/projects/nautobot-contract-models/en/latest/user/faq/</loc>
+         <loc>https://nautobot-contract-models.readthedocs.io/en/latest/user/faq/</loc>
          <lastmod>2026-05-09</lastmod>
     </url>
 </urlset>

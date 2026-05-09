@@ -44,4 +44,4 @@ Nautobot's `NautobotUIViewSetRouter` auto-registers `<model>/<pk>/notes/`, `<mod
 
 ## Where do I report bugs / request features?
 
-Open an issue on the [GitHub repository](https://github.com/rpmcg/nautobot-contract-models/issues).
+Open an issue on the [GitHub repository](https://github.com/rsp2k/nautobot-contract-models/issues).
