@@ -1,0 +1,97 @@
+{% extends 'base.html' %}
+{% load static %}
+{% comment %}
+Action Required — Phase 12.
+
+Three priority bands: URGENT (auto-renew + in-notice-window), WARNING
+(<=7 days OR in-notice-window without auto-renew), INFO (anything else
+in the configured window). Each band renders as its own card with a
+priority badge.
+
+Why three sections rather than one big sortable table:
+    Operators want the "must act today" set isolated from the "look
+    at next month" set. A single sortable table puts them adjacent;
+    sections force the visual separation.
+
+Context (from views/action_required.py):
+    urgent       — list of Contract objects, soonest end_date first
+    warning      — same shape
+    info         — same shape
+    window_days  — query-param window (default 60)
+    total        — len(urgent + warning + info)
+{% endcomment %}
+
+{% block title %}Action Required{% endblock %}
+
+{% block extra_styles %}
+<link rel="stylesheet" href="{% static 'nautobot_contract_models/contract_action_required.css' %}">
+{% endblock %}
+
+{% block content %}
+<div class="contract-action-required">
+    <header class="ar-header">
+        <h2>Action Required</h2>
+        <p class="ar-subtitle">
+            Contracts within {{ window_days }} day{{ window_days|pluralize }} of expiry, sorted by urgency.
+            Total: <strong>{{ total }}</strong>.
+        </p>
+        <form class="ar-window-form" method="get">
+            <label for="ar-window">Window:</label>
+            <select id="ar-window" name="window_days" onchange="this.form.submit()">
+                <option value="14" {% if window_days == 14 %}selected{% endif %}>14 days</option>
+                <option value="30" {% if window_days == 30 %}selected{% endif %}>30 days</option>
+                <option value="60" {% if window_days == 60 %}selected{% endif %}>60 days</option>
+                <option value="90" {% if window_days == 90 %}selected{% endif %}>90 days</option>
+                <option value="180" {% if window_days == 180 %}selected{% endif %}>180 days</option>
+                <option value="365" {% if window_days == 365 %}selected{% endif %}>365 days</option>
+            </select>
+        </form>
+    </header>
+
+    {% if total == 0 %}
+        <div class="ar-empty">
+            <p><strong>Nothing to act on.</strong></p>
+            <p>No contracts are within the {{ window_days }}-day window.</p>
+        </div>
+    {% else %}
+        {% if urgent %}
+            <section class="ar-bucket ar-bucket-urgent" aria-labelledby="ar-urgent-heading">
+                <h3 id="ar-urgent-heading" class="ar-bucket-heading">
+                    <span class="ar-badge ar-badge-urgent">Urgent</span>
+                    Auto-renews unless cancelled
+                </h3>
+                <p class="ar-bucket-note">
+                    These contracts are inside their notice window AND will auto-renew if no action is taken.
+                </p>
+                {% include "nautobot_contract_models/inc/_action_required_table.html" with rows=urgent %}
+            </section>
+        {% endif %}
+
+        {% if warning %}
+            <section class="ar-bucket ar-bucket-warning" aria-labelledby="ar-warning-heading">
+                <h3 id="ar-warning-heading" class="ar-bucket-heading">
+                    <span class="ar-badge ar-badge-warning">Warning</span>
+                    Imminent or in-notice-window
+                </h3>
+                <p class="ar-bucket-note">
+                    Either expiring within 7 days or inside the notice window without auto-renew. Lapse means termination.
+                </p>
+                {% include "nautobot_contract_models/inc/_action_required_table.html" with rows=warning %}
+            </section>
+        {% endif %}
+
+        {% if info %}
+            <section class="ar-bucket ar-bucket-info" aria-labelledby="ar-info-heading">
+                <h3 id="ar-info-heading" class="ar-bucket-heading">
+                    <span class="ar-badge ar-badge-info">Heads up</span>
+                    Upcoming
+                </h3>
+                <p class="ar-bucket-note">
+                    Within the {{ window_days }}-day window but outside urgency bands. Plan ahead.
+                </p>
+                {% include "nautobot_contract_models/inc/_action_required_table.html" with rows=info %}
+            </section>
+        {% endif %}
+    {% endif %}
+</div>
+{% endblock %}

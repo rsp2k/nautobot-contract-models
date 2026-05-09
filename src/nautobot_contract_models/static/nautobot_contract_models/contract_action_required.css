@@ -1,0 +1,202 @@
+/*
+ * Action Required styles — Phase 12.
+ *
+ * Three priority bands, each in its own card with a tier-specific
+ * accent color:
+ *
+ *   - Urgent: amber (matching the calendar's "renewals deserve attention")
+ *   - Warning: a slightly desaturated amber so it's clearly down-tier
+ *     from urgent without becoming a different hue
+ *   - Info: neutral gray
+ *
+ * Why we don't use red: a contract that's about to lapse isn't a
+ * security incident, it's an upcoming budget event. Red implies
+ * "everything's broken," which over-alarms operators who scan the
+ * page in passing. Amber is the right semantic intensity.
+ */
+
+.contract-action-required {
+    --ar-amber-h: 35;
+    --ar-radius: 0.5rem;
+    margin: 1rem 0;
+}
+
+.ar-header h2 {
+    margin: 0 0 0.25rem 0;
+}
+
+.ar-subtitle {
+    color: var(--bs-secondary-color, #6c757d);
+    margin: 0 0 1rem 0;
+    max-width: 60ch;
+}
+
+.ar-window-form {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.5rem;
+    margin-bottom: 1rem;
+}
+
+.ar-window-form select {
+    padding: 0.25rem 0.5rem;
+    border-radius: var(--ar-radius);
+    border: 1px solid var(--bs-border-color, #dee2e6);
+    background: var(--bs-body-bg, #fff);
+    color: inherit;
+    font: inherit;
+}
+
+/* Bucket cards ------------------------------------------ */
+
+.ar-bucket {
+    margin-bottom: 1.5rem;
+    border-radius: var(--ar-radius);
+    border: 1px solid var(--bs-border-color, #dee2e6);
+    overflow: hidden;
+}
+
+.ar-bucket-urgent {
+    border-left: 4px solid hsl(var(--ar-amber-h), 90%, 50%);
+}
+
+.ar-bucket-warning {
+    border-left: 4px solid hsl(var(--ar-amber-h), 75%, 60%);
+}
+
+.ar-bucket-info {
+    border-left: 4px solid var(--bs-border-color, #adb5bd);
+}
+
+.ar-bucket-heading {
+    margin: 0;
+    padding: 0.75rem 1rem;
+    background: var(--bs-tertiary-bg, #f8f9fa);
+    font-size: 1rem;
+    font-weight: 600;
+    display: flex;
+    align-items: center;
+    gap: 0.6rem;
+    border-bottom: 1px solid var(--bs-border-color, #dee2e6);
+}
+
+.ar-bucket-note {
+    margin: 0;
+    padding: 0.5rem 1rem;
+    color: var(--bs-secondary-color, #6c757d);
+    font-size: 0.85rem;
+    border-bottom: 1px solid var(--bs-border-color, #dee2e6);
+}
+
+/* Priority badges -------------------------------------- */
+
+.ar-badge {
+    display: inline-block;
+    padding: 0.15rem 0.6rem;
+    font-size: 0.7rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    border-radius: 999px;
+    color: #fff;
+}
+
+.ar-badge-urgent {
+    background: hsl(var(--ar-amber-h), 90%, 45%);
+}
+
+.ar-badge-warning {
+    background: hsl(var(--ar-amber-h), 75%, 55%);
+}
+
+.ar-badge-info {
+    background: var(--bs-secondary-color, #6c757d);
+}
+
+/* Per-bucket table ------------------------------------- */
+
+.ar-table {
+    width: 100%;
+    border-collapse: collapse;
+}
+
+.ar-table th,
+.ar-table td {
+    padding: 0.6rem 1rem;
+    text-align: left;
+    vertical-align: top;
+}
+
+.ar-table th {
+    font-size: 0.75rem;
+    font-weight: 600;
+    color: var(--bs-secondary-color, #6c757d);
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+    border-bottom: 1px solid var(--bs-border-color, #dee2e6);
+}
+
+.ar-table tbody tr {
+    border-top: 1px solid var(--bs-border-color, #f0f0f0);
+}
+
+.ar-col-name a {
+    font-weight: 500;
+}
+
+.ar-contract-number {
+    display: block;
+    font-size: 0.75rem;
+    color: var(--bs-secondary-color, #6c757d);
+    margin-top: 0.1rem;
+}
+
+.ar-col-end {
+    font-variant-numeric: tabular-nums;
+    white-space: nowrap;
+}
+
+.ar-flag {
+    display: inline-block;
+    padding: 0.1rem 0.5rem;
+    margin-right: 0.3rem;
+    font-size: 0.7rem;
+    font-weight: 500;
+    border-radius: 999px;
+    background: var(--bs-tertiary-bg, #f8f9fa);
+    color: var(--bs-body-color, #212529);
+    border: 1px solid var(--bs-border-color, #dee2e6);
+}
+
+.ar-flag-auto {
+    /* Auto-renew is the most consequential flag — give it amber */
+    background: hsl(var(--ar-amber-h), 50%, 92%);
+    border-color: hsl(var(--ar-amber-h), 60%, 70%);
+    color: hsl(var(--ar-amber-h), 70%, 25%);
+}
+
+[data-bs-theme="dark"] .ar-flag-auto {
+    background: hsl(var(--ar-amber-h), 30%, 22%);
+    border-color: hsl(var(--ar-amber-h), 60%, 40%);
+    color: hsl(var(--ar-amber-h), 80%, 75%);
+}
+
+.ar-action-link {
+    text-decoration: none;
+    font-size: 0.85rem;
+    white-space: nowrap;
+}
+
+/* Empty state ------------------------------------------ */
+
+.ar-empty {
+    padding: 2rem;
+    background: var(--bs-tertiary-bg, #f8f9fa);
+    border-radius: var(--ar-radius);
+    text-align: center;
+    color: var(--bs-secondary-color, #6c757d);
+}
+
+.ar-empty p {
+    margin: 0 0 0.5rem 0;
+}

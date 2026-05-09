@@ -1,0 +1,48 @@
+{% comment %}
+"Action Required" home dashboard panel — top contracts needing attention.
+
+Context:
+    action_required: list of (contract, priority_tier) tuples, capped at 5.
+
+Tier strings: "urgent", "warning", "info" — match priority module constants.
+{% endcomment %}
+
+{% if perms.nautobot_contract_models.view_contract %}
+    {% if action_required %}
+        {% for contract, tier in action_required %}
+            <div class="list-group-item">
+                <a href="{{ contract.get_absolute_url }}">
+                    {{ contract.name }}
+                </a>
+                <span class="float-end">
+                    {% if tier == "urgent" %}
+                        <span class="badge" style="background: hsl(35, 90%, 45%); color: #fff;">Urgent</span>
+                    {% elif tier == "warning" %}
+                        <span class="badge" style="background: hsl(35, 75%, 55%); color: #fff;">Warning</span>
+                    {% else %}
+                        <span class="badge bg-secondary">Heads up</span>
+                    {% endif %}
+                </span>
+                <br>
+                <small class="text-secondary">
+                    {{ contract.provider.name }}
+                    &middot; expires {{ contract.end_date|date:"SHORT_DATE_FORMAT" }}
+                    {% if contract.auto_renew %} &middot; <em>auto-renew</em>{% endif %}
+                </small>
+            </div>
+        {% endfor %}
+        <div class="list-group-item text-end">
+            <a href="{% url 'plugins:nautobot_contract_models:contract_action_required' %}">
+                View all action items →
+            </a>
+        </div>
+    {% else %}
+        <div class="card-body text-secondary">
+            Nothing requires action right now.
+        </div>
+    {% endif %}
+{% else %}
+    <div class="card-body text-secondary">
+        <span class="mdi mdi-lock" aria-hidden="true"></span> No permission
+    </div>
+{% endif %}

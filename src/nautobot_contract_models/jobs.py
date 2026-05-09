@@ -18,7 +18,7 @@ from django.conf import settings
 from nautobot.apps.jobs import BooleanVar, IntegerVar, Job, ObjectVar, register_jobs
 from nautobot.dcim.models import Device, Location
 
-from nautobot_contract_models import cost
+from nautobot_contract_models import cost, priority
 from nautobot_contract_models.helpers import has_active_coverage
 from nautobot_contract_models.models import Contract
 
@@ -95,20 +95,18 @@ class RenewalCheckJob(Job):
         for contract in qs:
             days_remaining = (contract.end_date - today).days
 
-            # If a notice period is set, the actionable date is end_date - notice_period_days.
-            # Once we're inside the notice window, urgency jumps regardless of days_remaining.
+            # Severity rubric is centralized in priority.action_priority so the
+            # dashboard, the action-required list view, and this Job all share
+            # one source of truth. URGENT and WARNING both flow to logger.warning;
+            # INFO maps to logger.info. Anything that returns no priority (e.g.
+            # missing end_date, which the queryset already excludes) is skipped.
+            tier = priority.action_priority(contract, on_date=today)
+            if tier is None:
+                continue
+            level = self.logger.warning if tier in (priority.URGENT, priority.WARNING) else self.logger.info
+
             notice_window = contract.notice_period_days or 0
             days_to_notice = days_remaining - notice_window
-            in_notice_window = notice_window > 0 and days_to_notice <= 0
-
-            # Severity rubric:
-            #   - in notice window for an auto-renewing contract: WARNING (action needed to avoid lock-in)
-            #   - <= 7 days remaining: WARNING
-            #   - everything else: INFO
-            if (in_notice_window and contract.auto_renew) or days_remaining <= 7:
-                level = self.logger.warning
-            else:
-                level = self.logger.info
 
             extra_msg = ""
             if notice_window > 0:
@@ -117,7 +115,8 @@ class RenewalCheckJob(Job):
                 extra_msg += " Auto-renew is ON."
 
             level(
-                "Contract '%s' (provider=%s) expires %s — %d day(s) %s.%s",
+                "[%s] Contract '%s' (provider=%s) expires %s — %d day(s) %s.%s",
+                tier.upper(),
                 contract.name,
                 contract.provider.name,
                 contract.end_date,

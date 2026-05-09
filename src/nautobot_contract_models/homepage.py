@@ -20,7 +20,7 @@ from django.conf import settings
 from nautobot.apps.ui import HomePagePanel
 from nautobot.dcim.models import Device
 
-from nautobot_contract_models import cost
+from nautobot_contract_models import cost, priority
 from nautobot_contract_models.helpers import has_active_coverage
 from nautobot_contract_models.models import Contract
 
@@ -96,6 +96,16 @@ def get_renewal_forecast(request):
     ]
 
 
+def get_action_required(request):
+    """Top 5 priority-bucketed contracts for the Action Required panel.
+
+    Uses the centralized rubric so the panel stays in sync with the
+    full Action Required view and the RenewalCheckJob.
+    """
+    rows = priority.contracts_needing_action(window_days=60)
+    return rows[:5]
+
+
 layout = (
     HomePagePanel(
         name="Contracts",
@@ -127,5 +137,15 @@ layout = (
         permissions=["nautobot_contract_models.view_contract"],
         custom_data={"renewal_forecast": get_renewal_forecast},
         custom_template="renewal_forecast_panel.html",
+    ),
+    HomePagePanel(
+        # Weight chosen lower than Coverage Gaps + Cost Summary so the
+        # most-time-sensitive surface lives near the top of the panel
+        # column where eyes land first.
+        name="Action Required",
+        weight=1505,
+        permissions=["nautobot_contract_models.view_contract"],
+        custom_data={"action_required": get_action_required},
+        custom_template="action_required_panel.html",
     ),
 )

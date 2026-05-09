@@ -1,0 +1,46 @@
+{% comment %}
+Reusable per-bucket table for the Action Required view.
+
+Expects:
+    rows — list of Contract objects, sorted by end_date ascending
+{% endcomment %}
+<table class="ar-table">
+    <thead>
+        <tr>
+            <th scope="col" class="ar-col-name">Contract</th>
+            <th scope="col" class="ar-col-provider">Provider</th>
+            <th scope="col" class="ar-col-end">End date</th>
+            <th scope="col" class="ar-col-flags">Flags</th>
+            <th scope="col" class="ar-col-actions"></th>
+        </tr>
+    </thead>
+    <tbody>
+        {% for contract in rows %}
+            <tr>
+                <td class="ar-col-name">
+                    <a href="{{ contract.get_absolute_url }}">{{ contract.name }}</a>
+                    {% if contract.contract_number %}
+                        <span class="ar-contract-number">{{ contract.contract_number }}</span>
+                    {% endif %}
+                </td>
+                <td class="ar-col-provider">{{ contract.provider.name }}</td>
+                <td class="ar-col-end">
+                    {{ contract.end_date|date:"SHORT_DATE_FORMAT" }}
+                </td>
+                <td class="ar-col-flags">
+                    {% if contract.auto_renew %}
+                        <span class="ar-flag ar-flag-auto">Auto-renew</span>
+                    {% endif %}
+                    {% if contract.notice_period_days %}
+                        <span class="ar-flag ar-flag-notice">{{ contract.notice_period_days }}d notice</span>
+                    {% endif %}
+                </td>
+                <td class="ar-col-actions">
+                    <a class="ar-action-link" href="{% url 'plugins:nautobot_contract_models:contract_edit' pk=contract.pk %}">
+                        Edit →
+                    </a>
+                </td>
+            </tr>
+        {% endfor %}
+    </tbody>
+</table>

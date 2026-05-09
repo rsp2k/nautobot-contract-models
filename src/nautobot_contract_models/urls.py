@@ -12,6 +12,7 @@ from django.urls import path
 from nautobot.apps.urls import NautobotUIViewSetRouter
 
 from nautobot_contract_models.views import (
+    ContractActionRequiredView,
     ContractAssignmentUIViewSet,
     ContractAttachmentUIViewSet,
     ContractRenewalCalendarView,
@@ -42,5 +43,10 @@ urlpatterns = [
         "reports/renewal-calendar/",
         ContractRenewalCalendarView.as_view(),
         name="contract_renewal_calendar",
+    ),
+    path(
+        "reports/action-required/",
+        ContractActionRequiredView.as_view(),
+        name="contract_action_required",
     ),
 ] + router.urls
