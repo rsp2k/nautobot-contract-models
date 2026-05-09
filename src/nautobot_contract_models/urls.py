@@ -8,11 +8,13 @@ canonical URL patterns for list / detail / create / edit / delete / bulk-edit
 plugin reference those name-strings.
 """
 
+from django.urls import path
 from nautobot.apps.urls import NautobotUIViewSetRouter
 
 from nautobot_contract_models.views import (
     ContractAssignmentUIViewSet,
     ContractAttachmentUIViewSet,
+    ContractRenewalCalendarView,
     ContractUIViewSet,
     InvoiceAttachmentUIViewSet,
     InvoiceUIViewSet,
@@ -28,4 +30,17 @@ router.register("invoice-attachments", InvoiceAttachmentUIViewSet)
 router.register("contract-assignments", ContractAssignmentUIViewSet)
 
 app_name = "nautobot_contract_models"
-urlpatterns = router.urls
+# Reports are non-CRUD; they live OUTSIDE the router-managed prefixes.
+# Why ``reports/`` rather than ``contracts/``: the router owns ``contracts/*``
+# and treats any unmatched suffix as a candidate UUID — putting
+# ``contracts/calendar/`` here would collide with the auto-generated
+# ``contracts/<uuid>/`` detail route, giving a 500 ("calendar is not a
+# valid UUID"). The ``reports/`` prefix has no router rules and matches
+# the navigation menu's "Reports" group label.
+urlpatterns = [
+    path(
+        "reports/renewal-calendar/",
+        ContractRenewalCalendarView.as_view(),
+        name="contract_renewal_calendar",
+    ),
+] + router.urls

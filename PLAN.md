@@ -193,6 +193,35 @@ dev seed data; `make test` runs ≥31 tests passing; `nautobot-server
 runjob` for CostReportJob produces a JobLogEntry with the expected
 INFO-level summary.
 
+### Phase 9 — Renewal Calendar visualization (~1 session) — DONE
+
+A forward-looking, month-by-month renewal heat-map at
+`/plugins/contracts/reports/renewal-calendar/`. Operators see "March is
+a $400k month for renewals" at a glance and can click through to the
+filtered contract list.
+
+- ✅ `cost.renewal_calendar(months=12, on_date=None)` — list of per-month
+  dicts with `{year, month, label, totals, contract_count}` grouped by
+  currency; window anchors at the first of the current month
+- ✅ `ContractRenewalCalendarView` (TemplateView, not NautobotUIViewSet —
+  this is a non-CRUD report); URL at the `reports/` prefix to avoid
+  collision with the router's `contracts/<uuid>/` detail pattern
+- ✅ Calendar template + dedicated CSS (amber single-hue saturation scale,
+  not purple — see CLAUDE.md). Real `<table>` semantics, sticky first
+  column, horizontal scroll when wide, dark-mode aware via
+  `[data-bs-theme="dark"]`, print-friendly, `prefers-reduced-motion`
+  honored
+- ✅ Click-through cells link to the contract list filtered by
+  `end_date__year`, `end_date__month`, `currency`
+- ✅ Window selector (3/6/12/24/36 months) — auto-submits on change
+- ✅ "Reports" nav group added to the Contracts tab
+- ✅ 9 helper tests in `tests/test_calendar.py`
+
+**Migration-default knock-on:** the calendar inherits Phase 8's
+billing_period assumption. If existing contracts haven't been re-flagged
+(annual contracts still defaulting to monthly), the calendar's per-month
+total over-counts proportionally.
+
 ## Tech-stack decisions (final, don't relitigate)
 
 | Concern | Choice | Rationale |

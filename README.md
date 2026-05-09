@@ -183,6 +183,20 @@ The `Monthly cost report` Job (under the *Contracts* group) logs the same number
 
 ⚠️ **Migration note for upgrading installs:** migration `0007_contract_billing_period` defaults every existing contract to `billing_period='monthly'`. If you have annual / quarterly contracts already in the database, edit them after upgrade — otherwise the burn-rate panels will over-count by 12x (annual) or 3x (quarterly).
 
+### Renewal Calendar
+
+A dedicated `/plugins/contracts/reports/renewal-calendar/` page renders a forward-looking, month-by-month grid of contract renewals (default 12 months, configurable up to 36). Cells encode total renewal value (recurring × term + one-time fees) with an amber saturation scale — pale wash for small months, saturated for the renewal cliff. Click any cell to drill into the contract list filtered to that month + currency.
+
+Design notes:
+
+- **Per-currency rows.** No FX conversion. USD and EUR contracts appear on separate rows.
+- **Single-hue scale.** Amber lightness ramp; works in light *and* dark mode (the CSS swaps the lightness curve for dark backgrounds).
+- **Accessibility.** Real `<table>` semantics, screen-reader labels per cell, `prefers-reduced-motion` honored, focus-visible outlines.
+- **Print-friendly.** `@media print` strips colors and adds borders so procurement teams can take it to budget meetings.
+- **Anchored to month boundaries.** The window starts at the first of the *current* month, so partial-month renewals at the left edge aren't dropped.
+
+Linked from the **Contracts → Reports → Renewal Calendar** nav menu.
+
 ## File attachments
 
 Both `Contract` and `Invoice` support multiple file attachments (the upload field accepts any file type — typically PDF for invoices and signed contracts).

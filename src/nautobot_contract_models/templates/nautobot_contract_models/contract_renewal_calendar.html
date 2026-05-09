@@ -1,0 +1,121 @@
+{% extends 'base.html' %}
+{% load static %}
+{% comment %}
+Renewal Calendar — Phase 9.
+
+Forward-looking month-by-month grid of contract renewals, grouped by
+currency. Cells show the total contract value renewing in that month;
+saturation encodes magnitude (relative to the visible window's max);
+clicking a cell drills into the contract list filtered to that month.
+
+Why a <table> rather than a CSS-Grid div:
+    Screen readers handle <table>+<thead>+<th> idiomatically — row/column
+    navigation, header announcements, scope. Replicating that with ARIA
+    on grid divs is achievable but fragile. The visual layout uses CSS
+    Grid via display: grid on the table, which preserves both the
+    accessibility tree and the modern layout.
+
+Color choice:
+    Amber (hsl 35) at 50% lightness saturated, 95% pale. "Renewals
+    cost attention" matches amber's UI semantics (warning, not danger).
+    No purple per the operator's standing rule.
+
+Context (from views/calendar.py):
+    grid          — list of {year, month, label, totals, contract_count, saturation}
+    currencies    — sorted set of currency codes present in the window
+    months        — window length (1–36)
+    today         — date.today() for highlighting the current month column
+{% endcomment %}
+
+{% block title %}Renewal Calendar{% endblock %}
+
+{% block extra_styles %}
+<link rel="stylesheet" href="{% static 'nautobot_contract_models/contract_renewal_calendar.css' %}">
+{% endblock %}
+
+{% block content %}
+<div class="contract-renewal-calendar">
+    <header class="cal-header">
+        <h2>Renewal Calendar</h2>
+        <p class="cal-subtitle">
+            Total contract value renewing each month over the next {{ months }} month{{ months|pluralize }}.
+            Cells link through to the contract list filtered to that month.
+        </p>
+        <form class="cal-window-form" method="get">
+            <label for="cal-months">Window:</label>
+            <select id="cal-months" name="months" onchange="this.form.submit()">
+                {% for n in window_options %}
+                    <option value="{{ n }}" {% if n == months %}selected{% endif %}>{{ n }} months</option>
+                {% endfor %}
+            </select>
+        </form>
+    </header>
+
+    {% if currencies %}
+        <div class="cal-table-wrap">
+            <table class="cal-table" role="table" aria-label="Renewal calendar">
+                <thead>
+                    <tr>
+                        <th scope="col" class="cal-corner">
+                            <span class="visually-hidden">Currency</span>
+                        </th>
+                        {% for cell in months_grid %}
+                            <th scope="col" class="cal-month-head{% if cell.year == today.year and cell.month == today.month %} cal-month-current{% endif %}">
+                                <span class="cal-month-label">{{ cell.label }}</span>
+                                <span class="cal-month-year">{{ cell.year }}</span>
+                            </th>
+                        {% endfor %}
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for row in rows %}
+                        <tr>
+                            <th scope="row" class="cal-currency-head">{{ row.currency }}</th>
+                            {% for cell in row.cells %}
+                                {% if cell.total %}
+                                    <td class="cal-cell cal-cell-filled{% if cell.is_current %} cal-cell-current{% endif %}" style="--cal-saturation: {{ cell.saturation }};">
+                                        <a class="cal-cell-link"
+                                           href="{% url 'plugins:nautobot_contract_models:contract_list' %}?end_date__year={{ cell.year }}&end_date__month={{ cell.month }}&currency={{ row.currency }}"
+                                           aria-label="{{ cell.label }} {{ cell.year }}: {{ cell.total|floatformat:0 }} {{ row.currency }}, {{ cell.contract_count }} contract{{ cell.contract_count|pluralize }} renewing">
+                                            <span class="cal-cell-value">{{ cell.total|floatformat:0 }}</span>
+                                            <span class="cal-cell-count">{{ cell.contract_count }}</span>
+                                        </a>
+                                    </td>
+                                {% else %}
+                                    <td class="cal-cell cal-cell-empty{% if cell.is_current %} cal-cell-current{% endif %}"
+                                        aria-label="{{ cell.label }} {{ cell.year }}: no renewals in {{ row.currency }}">
+                                        <span aria-hidden="true">—</span>
+                                    </td>
+                                {% endif %}
+                            {% endfor %}
+                        </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+
+        <footer class="cal-legend">
+            <span class="cal-legend-label">Spend intensity:</span>
+            <span class="cal-legend-scale" aria-hidden="true">
+                <span class="cal-legend-swatch" style="--cal-saturation: 5;"></span>
+                <span class="cal-legend-swatch" style="--cal-saturation: 30;"></span>
+                <span class="cal-legend-swatch" style="--cal-saturation: 60;"></span>
+                <span class="cal-legend-swatch" style="--cal-saturation: 100;"></span>
+            </span>
+            <span class="cal-legend-bounds">
+                <span>0</span>
+                <span>relative max</span>
+            </span>
+            <span class="cal-legend-divider" aria-hidden="true">·</span>
+            <span class="cal-legend-note">
+                Each cell shows total contract value (recurring × term + one-time fees) and the count of contracts renewing.
+            </span>
+        </footer>
+    {% else %}
+        <div class="cal-empty">
+            <p><strong>No renewals in the next {{ months }} month{{ months|pluralize }}.</strong></p>
+            <p>This is a fleet-wide forward view; if you expected renewals here, check that contracts have an end_date set.</p>
+        </div>
+    {% endif %}
+</div>
+{% endblock %}

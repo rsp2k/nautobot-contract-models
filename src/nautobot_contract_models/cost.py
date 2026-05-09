@@ -149,6 +149,88 @@ def spend_by_vendor(*, on_date=None, limit=10):
     return rows
 
 
+def renewal_calendar(months=12, *, on_date=None):
+    """Forward-looking month-by-month renewal cost grid.
+
+    Returns a list of ``{year, month, label, totals, contract_count}``
+    dicts in chronological order, where ``totals`` is a per-currency
+    ``dict[currency_code, Decimal]``. The list always has exactly
+    ``months`` entries — empty months appear with ``totals={}`` and
+    ``contract_count=0`` so the calendar grid stays rectangular.
+
+    Used by the Renewal Calendar view to render a heat-map-style
+    breakdown ("which month is the renewal cliff?"). Operators click a
+    cell to drill into the underlying contract list filtered to that
+    month.
+
+    The grid starts at the *first day of the current month* (or
+    ``on_date``'s month) so partial months don't hide near-term renewals.
+    """
+    if on_date is None:
+        on_date = date.today()
+
+    # Anchor at the first of the current month — shifts the window's
+    # left edge to a natural calendar boundary instead of "today minus 23 days".
+    grid_start = on_date.replace(day=1)
+    end_year, end_month = _add_months(grid_start.year, grid_start.month, months)
+    grid_end_exclusive = date(end_year, end_month, 1)
+
+    qs = Contract.objects.filter(end_date__gte=grid_start, end_date__lt=grid_end_exclusive).only(
+        "recurring_cost", "one_time_cost", "billing_period", "term_months", "currency", "end_date"
+    )
+
+    # Bucket contracts into (year, month) → list of contracts.
+    buckets = defaultdict(list)
+    for contract in qs:
+        key = (contract.end_date.year, contract.end_date.month)
+        buckets[key].append(contract)
+
+    result = []
+    year, month = grid_start.year, grid_start.month
+    for _ in range(months):
+        contracts = buckets.get((year, month), [])
+        totals = defaultdict(lambda: ZERO)
+        for contract in contracts:
+            totals[contract.currency] += total_contract_value(contract)
+        result.append(
+            {
+                "year": year,
+                "month": month,
+                "label": _MONTH_LABELS[month - 1],
+                "totals": dict(totals),
+                "contract_count": len(contracts),
+            }
+        )
+        year, month = _add_months(year, month, 1)
+    return result
+
+
+_MONTH_LABELS = (
+    "Jan",
+    "Feb",
+    "Mar",
+    "Apr",
+    "May",
+    "Jun",
+    "Jul",
+    "Aug",
+    "Sep",
+    "Oct",
+    "Nov",
+    "Dec",
+)
+
+
+def _add_months(year, month, delta):
+    """Return ``(year, month)`` ``delta`` months after ``(year, month)``.
+
+    Avoids dateutil; the only operation we need is integer month arithmetic
+    with year carry, which is a one-liner via divmod on a 0-indexed month.
+    """
+    total = (month - 1) + delta
+    return year + total // 12, (total % 12) + 1
+
+
 def coverage_gap_count():
     """Lightweight count of Devices that have no direct ContractAssignment.
 

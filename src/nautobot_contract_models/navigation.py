@@ -66,6 +66,17 @@ menu_items = (
                     ),
                 ),
             ),
+            NavMenuGroup(
+                name="Reports",
+                weight=200,
+                items=(
+                    NavMenuItem(
+                        link="plugins:nautobot_contract_models:contract_renewal_calendar",
+                        name="Renewal Calendar",
+                        permissions=["nautobot_contract_models.view_contract"],
+                    ),
+                ),
+            ),
         ),
     ),
 )

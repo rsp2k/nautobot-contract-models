@@ -1,0 +1,350 @@
+/*
+ * Renewal Calendar styles — Phase 9.
+ *
+ * Design notes:
+ *
+ * - Single-hue amber scale. The CSS custom property --cal-saturation
+ *   (set inline by the template, 0–100) interpolates between a pale
+ *   wash and a saturated amber. Amber says "renewals deserve attention"
+ *   without crossing into "danger" red. Operator's CLAUDE.md disallows
+ *   purple, so we steer clear.
+ *
+ * - The first column (currency code) sticks to the left edge during
+ *   horizontal scroll on mobile/narrow screens. Without that, scanning
+ *   "USD vs EUR for March" requires scrolling back to the labels.
+ *
+ * - Print styles strip color and rely on borders + numbers. Procurement
+ *   teams print this for budget meetings; ink is expensive.
+ *
+ * - Dark mode swaps the lightness ramp (dark cells get darker
+ *   backgrounds + lighter foregrounds). We sniff Nautobot's
+ *   [data-bs-theme="dark"] attribute, which Bootstrap 5 sets globally.
+ */
+
+.contract-renewal-calendar {
+    --cal-amber-h: 35;
+    --cal-cell-min-w: 4.5rem;
+    --cal-cell-min-h: 3.5rem;
+    --cal-radius: 0.4rem;
+
+    margin: 1rem 0;
+}
+
+.cal-header h2 {
+    margin: 0 0 0.25rem 0;
+}
+
+.cal-subtitle {
+    color: var(--bs-secondary-color, #6c757d);
+    margin: 0 0 1rem 0;
+    max-width: 60ch;
+}
+
+.cal-window-form {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.5rem;
+    margin-bottom: 1rem;
+}
+
+.cal-window-form select {
+    padding: 0.25rem 0.5rem;
+    border-radius: var(--cal-radius);
+    border: 1px solid var(--bs-border-color, #dee2e6);
+    background: var(--bs-body-bg, #fff);
+    color: inherit;
+    font: inherit;
+}
+
+/* Horizontal-scroll wrapper — preserves table structure on narrow screens */
+.cal-table-wrap {
+    overflow-x: auto;
+    border-radius: var(--cal-radius);
+    border: 1px solid var(--bs-border-color, #dee2e6);
+    background: var(--bs-body-bg, #fff);
+}
+
+.cal-table {
+    border-collapse: separate;
+    border-spacing: 0;
+    width: 100%;
+}
+
+.cal-table th,
+.cal-table td {
+    padding: 0;
+    border: none;
+}
+
+.cal-corner {
+    background: var(--bs-tertiary-bg, #f8f9fa);
+    position: sticky;
+    left: 0;
+    z-index: 2;
+    width: 4rem;
+}
+
+.cal-currency-head {
+    background: var(--bs-tertiary-bg, #f8f9fa);
+    position: sticky;
+    left: 0;
+    z-index: 1;
+    padding: 0.5rem 0.75rem;
+    font-weight: 600;
+    text-align: left;
+    font-size: 0.875rem;
+    color: var(--bs-body-color, #212529);
+    border-right: 1px solid var(--bs-border-color, #dee2e6);
+    border-top: 1px solid var(--bs-border-color, #dee2e6);
+    min-width: 4rem;
+}
+
+.cal-month-head {
+    padding: 0.5rem 0.4rem;
+    text-align: center;
+    font-weight: 500;
+    font-size: 0.75rem;
+    color: var(--bs-secondary-color, #6c757d);
+    background: var(--bs-tertiary-bg, #f8f9fa);
+    min-width: var(--cal-cell-min-w);
+    border-bottom: 1px solid var(--bs-border-color, #dee2e6);
+}
+
+.cal-month-head .cal-month-label {
+    display: block;
+    font-weight: 600;
+    color: var(--bs-body-color, #212529);
+    font-size: 0.875rem;
+}
+
+.cal-month-head .cal-month-year {
+    display: block;
+    font-size: 0.7rem;
+    opacity: 0.7;
+}
+
+/* Current month: amber underline on the column header AND a subtle
+ * border on every cell in that column. Provides anchoring without
+ * stealing attention from the data. */
+.cal-month-head.cal-month-current {
+    box-shadow: inset 0 -3px 0 0 hsl(var(--cal-amber-h), 90%, 50%);
+}
+
+.cal-cell {
+    min-width: var(--cal-cell-min-w);
+    height: var(--cal-cell-min-h);
+    border-top: 1px solid var(--bs-border-color, #dee2e6);
+    text-align: center;
+    vertical-align: middle;
+    transition: transform 100ms ease;
+}
+
+/* The data cell: background lightness ramps with saturation hint.
+ *
+ * 95% lightness at sat=0 (pale wash, indicates "something but small")
+ * 55% lightness at sat=100 (saturated amber, "this month is heavy")
+ *
+ * Saturation channel widens slightly at higher values so saturated
+ * cells feel more "alive" — pure lightness ramps look chalky. */
+.cal-cell-filled {
+    background: hsl(
+        var(--cal-amber-h),
+        calc(70% + var(--cal-saturation, 0) * 0.2%),
+        calc(95% - var(--cal-saturation, 0) * 0.4%)
+    );
+}
+
+.cal-cell-link {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 0.1rem;
+    width: 100%;
+    height: 100%;
+    padding: 0.4rem 0.3rem;
+    text-decoration: none;
+    color: inherit;
+    border-radius: 0;
+}
+
+.cal-cell-link:hover {
+    text-decoration: none;
+    color: inherit;
+    transform: scale(1.04);
+    box-shadow: 0 0 0 2px hsl(var(--cal-amber-h), 90%, 45%) inset;
+}
+
+.cal-cell-link:focus-visible {
+    outline: 2px solid hsl(var(--cal-amber-h), 90%, 40%);
+    outline-offset: -2px;
+}
+
+.cal-cell-value {
+    font-weight: 600;
+    font-size: 0.875rem;
+    color: var(--bs-body-color, #212529);
+    /* tabular numerals so columns of digits visually line up */
+    font-variant-numeric: tabular-nums;
+}
+
+.cal-cell-count {
+    font-size: 0.7rem;
+    opacity: 0.65;
+}
+
+.cal-cell-empty {
+    background: transparent;
+    color: var(--bs-secondary-color, #adb5bd);
+    font-size: 0.875rem;
+}
+
+/* Subtle ring around the current-month column on data cells too */
+.cal-cell-current {
+    box-shadow: inset 1px 0 0 0 rgba(0, 0, 0, 0.05),
+                inset -1px 0 0 0 rgba(0, 0, 0, 0.05);
+}
+
+/* Legend ---------------------------------------------------- */
+
+.cal-legend {
+    display: flex;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 0.5rem;
+    margin-top: 0.75rem;
+    font-size: 0.8rem;
+    color: var(--bs-secondary-color, #6c757d);
+}
+
+.cal-legend-label {
+    font-weight: 500;
+}
+
+.cal-legend-scale {
+    display: inline-flex;
+    border-radius: 999px;
+    overflow: hidden;
+    border: 1px solid var(--bs-border-color, #dee2e6);
+}
+
+.cal-legend-swatch {
+    width: 1.25rem;
+    height: 0.75rem;
+    background: hsl(
+        var(--cal-amber-h),
+        calc(70% + var(--cal-saturation, 0) * 0.2%),
+        calc(95% - var(--cal-saturation, 0) * 0.4%)
+    );
+}
+
+.cal-legend-bounds {
+    display: inline-flex;
+    gap: 1rem;
+    font-variant-numeric: tabular-nums;
+}
+
+.cal-legend-divider {
+    opacity: 0.4;
+}
+
+.cal-legend-note {
+    flex: 1 1 12rem;
+    min-width: 0;
+}
+
+/* Empty state --------------------------------------------- */
+
+.cal-empty {
+    padding: 2rem;
+    background: var(--bs-tertiary-bg, #f8f9fa);
+    border-radius: var(--cal-radius);
+    text-align: center;
+    color: var(--bs-secondary-color, #6c757d);
+}
+
+.cal-empty p {
+    margin: 0 0 0.5rem 0;
+}
+
+/* Visually-hidden helper for screen-reader-only labels */
+
+.contract-renewal-calendar .visually-hidden {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    padding: 0;
+    margin: -1px;
+    overflow: hidden;
+    clip: rect(0, 0, 0, 0);
+    white-space: nowrap;
+    border: 0;
+}
+
+/* Dark mode ---------------------------------------------- */
+
+[data-bs-theme="dark"] .cal-cell-filled {
+    background: hsl(
+        var(--cal-amber-h),
+        calc(50% + var(--cal-saturation, 0) * 0.4%),
+        calc(15% + var(--cal-saturation, 0) * 0.3%)
+    );
+}
+
+[data-bs-theme="dark"] .cal-cell-value {
+    color: rgba(255, 255, 255, 0.95);
+}
+
+[data-bs-theme="dark"] .cal-legend-swatch {
+    background: hsl(
+        var(--cal-amber-h),
+        calc(50% + var(--cal-saturation, 0) * 0.4%),
+        calc(15% + var(--cal-saturation, 0) * 0.3%)
+    );
+}
+
+/* Print -------------------------------------------------- */
+
+@media print {
+    .cal-window-form,
+    .cal-legend-scale,
+    .cal-legend-divider {
+        display: none;
+    }
+
+    .cal-cell-filled,
+    .cal-cell-empty,
+    .cal-currency-head,
+    .cal-month-head,
+    .cal-corner {
+        background: transparent !important;
+        color: #000 !important;
+        box-shadow: none !important;
+    }
+
+    .cal-cell {
+        border: 1px solid #999;
+    }
+
+    .cal-cell-link {
+        color: #000 !important;
+    }
+
+    .cal-cell-current {
+        outline: 2px solid #000;
+        outline-offset: -2px;
+    }
+}
+
+/* Reduced motion --------------------------------------- */
+
+@media (prefers-reduced-motion: reduce) {
+    .cal-cell,
+    .cal-cell-link {
+        transition: none;
+    }
+
+    .cal-cell-link:hover {
+        transform: none;
+    }
+}
