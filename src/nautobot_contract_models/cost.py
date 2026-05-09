@@ -308,6 +308,97 @@ def history(*, weeks=12, currency=None, on_date=None):
     return list(qs.order_by("snapshot_date", "currency"))
 
 
+def detect_anomalies(*, threshold=Decimal("0.20"), lookback_weeks=4, on_date=None):
+    """Compare today's snapshots to ``lookback_weeks`` ago, return spend anomalies.
+
+    Returns a list of dicts: ``{currency, metric, prev_value, current_value,
+    pct_change, direction}``. ``direction`` is ``"up"`` or ``"down"``.
+    Only changes whose absolute pct_change exceeds ``threshold`` are
+    returned — a 5% week-over-week drift is noise, a 25% jump is news.
+
+    Compared metrics: ``monthly_burn`` and ``renewal_90d``. We do NOT
+    compare ``active_contract_count`` because count changes are usually
+    intentional (operator added/removed a contract) — flagging them as
+    anomalies would generate false positives for routine fleet changes.
+
+    Comparisons are per-currency. A currency that exists today but not
+    in the lookback window gets reported as ``"up"`` from 0; the inverse
+    (existed then, gone now) is reported as ``"down"`` to 0.
+
+    Why a fixed lookback rather than rolling stats: at typical operator
+    snapshot cadence (weekly), 4 weeks is ~enough history to smooth
+    week-to-week noise without requiring sophisticated time-series
+    machinery. Operators wanting more rigor can run their own analysis
+    against the API.
+    """
+    if on_date is None:
+        on_date = date.today()
+
+    from nautobot_contract_models.models import CostSnapshot
+
+    # Find the most recent snapshot at-or-before today, and the most
+    # recent at-or-before (today - lookback_weeks). We don't require
+    # exact-date matches — operators may have skipped a week.
+    lookback_target = on_date - timedelta(weeks=lookback_weeks)
+
+    def _by_currency(qs):
+        result = {}
+        for snap in qs.order_by("currency", "-snapshot_date"):
+            # qs is already ordered, so first row per currency wins.
+            result.setdefault(snap.currency, snap)
+        return result
+
+    current = _by_currency(CostSnapshot.objects.filter(snapshot_date__lte=on_date))
+    previous = _by_currency(CostSnapshot.objects.filter(snapshot_date__lte=lookback_target))
+
+    anomalies = []
+    currencies = set(current) | set(previous)
+    for currency in sorted(currencies):
+        cur_snap = current.get(currency)
+        prev_snap = previous.get(currency)
+        for metric in ("monthly_burn", "renewal_90d"):
+            cur_val = Decimal(str(getattr(cur_snap, metric))) if cur_snap else ZERO
+            prev_val = Decimal(str(getattr(prev_snap, metric))) if prev_snap else ZERO
+            anomaly = _classify_anomaly(currency, metric, prev_val, cur_val, threshold)
+            if anomaly is not None:
+                anomalies.append(anomaly)
+    return anomalies
+
+
+def _classify_anomaly(currency, metric, prev_val, cur_val, threshold):
+    """Return an anomaly dict if the change exceeds threshold, else None.
+
+    Exposed as a separate function so test code can poke individual
+    edge cases (zero baseline, zero current, identical values) without
+    standing up snapshot fixtures.
+    """
+    if prev_val == cur_val:
+        return None
+    if prev_val == 0:
+        # New currency / new metric — report as up-from-zero. The
+        # pct_change is technically infinite; we use a sentinel value
+        # callers can render as "NEW" rather than a number.
+        return {
+            "currency": currency,
+            "metric": metric,
+            "prev_value": prev_val,
+            "current_value": cur_val,
+            "pct_change": None,
+            "direction": "up" if cur_val > 0 else "down",
+        }
+    pct_change = (cur_val - prev_val) / prev_val
+    if abs(pct_change) < threshold:
+        return None
+    return {
+        "currency": currency,
+        "metric": metric,
+        "prev_value": prev_val,
+        "current_value": cur_val,
+        "pct_change": pct_change,
+        "direction": "up" if pct_change > 0 else "down",
+    }
+
+
 def coverage_gap_count():
     """Lightweight count of Devices that have no direct ContractAssignment.
 

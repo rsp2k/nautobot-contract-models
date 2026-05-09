@@ -307,4 +307,74 @@ class CostHistoryJob(Job):
         return len(snapshots)
 
 
-register_jobs(RenewalCheckJob, CoverageGapJob, CostReportJob, CostHistoryJob)
+class CostAnomalyJob(Job):
+    """Diff this week's cost snapshots against ``lookback_weeks`` ago, log anomalies.
+
+    Read-only. Operators schedule weekly to get an alert when burn rate
+    or renewal forecast changes by more than ``threshold_pct`` from the
+    historical baseline. Hooks into existing JobLogEntry webhook plumbing,
+    so anomalies can route into Slack / email / a ticket.
+
+    Requires that ``CostHistoryJob`` has been running long enough to
+    have a snapshot at-or-before (today - lookback_weeks). Without
+    historical data the helper reports nothing and the Job logs an INFO
+    line saying so.
+    """
+
+    threshold_pct = IntegerVar(
+        default=20,
+        description="Percent change threshold (1-200). Changes below this are noise; above are anomalies.",
+        min_value=1,
+        max_value=200,
+    )
+    lookback_weeks = IntegerVar(
+        default=4,
+        description="How many weeks back to compare today's snapshot against.",
+        min_value=1,
+        max_value=52,
+    )
+
+    class Meta:
+        """Job metadata."""
+
+        name = "Detect cost anomalies"
+        description = "Flag week-over-week (or N-week) jumps in monthly burn / renewal forecast."
+        grouping = NAME
+        has_sensitive_variables = False
+
+    def run(self, threshold_pct, lookback_weeks):
+        """Compute anomalies and emit one WARNING per finding."""
+        from decimal import Decimal as D
+
+        threshold = D(threshold_pct) / D(100)
+        anomalies = cost.detect_anomalies(threshold=threshold, lookback_weeks=lookback_weeks)
+
+        if not anomalies:
+            self.logger.info(
+                "No anomalies — all currency/metric pairs within %d%% of %d-week baseline.",
+                threshold_pct,
+                lookback_weeks,
+            )
+            return 0
+
+        for a in anomalies:
+            arrow = "↑" if a["direction"] == "up" else "↓"
+            if a["pct_change"] is None:
+                pct_str = "NEW"
+            else:
+                pct_str = f"{a['pct_change'] * 100:+.1f}%"
+            self.logger.warning(
+                "Anomaly: %s %s %s %s → %s (%s vs %d weeks ago).",
+                a["currency"],
+                a["metric"],
+                arrow,
+                a["prev_value"],
+                a["current_value"],
+                pct_str,
+                lookback_weeks,
+            )
+        self.logger.info("Detected %d anomal%s.", len(anomalies), "y" if len(anomalies) == 1 else "ies")
+        return len(anomalies)
+
+
+register_jobs(RenewalCheckJob, CoverageGapJob, CostReportJob, CostHistoryJob, CostAnomalyJob)
