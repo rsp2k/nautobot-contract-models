@@ -1839,7 +1839,7 @@
 <li><strong>HEADS UP</strong> — within the configured window but outside urgency bands.</li>
 </ul>
 <p>Each row links to the contract detail page and to a direct edit shortcut. The window selector ranges from 14 to 365 days.</p>
-<p><a class="glightbox" data-type="image" data-width="auto" data-height="auto" href="../../images/action-required.png" data-desc-position="bottom"><img alt="Action Required" src="../../images/action-required.png"></a></p>
+<p><a class="glightbox" data-type="image" data-width="100%" data-height="auto" href="../../images/action-required.png" data-title="Action Required" data-desc-position="bottom"><img alt="Action Required" src="../../images/action-required.png"></a></p>
 <p>The same rubric drives the <strong>Action Required</strong> home dashboard panel and the <code>Check upcoming renewals</code> Job's severity classification — one source of truth keeps the three surfaces aligned.</p>
 <h2 id="renewal-calendar">Renewal Calendar<a class="headerlink" href="#renewal-calendar" title="Permanent link">¶</a></h2>
 <p><code>/plugins/contracts/reports/renewal-calendar/</code> is a forward-looking, month-by-month grid of contract renewals with cost density encoded as amber saturation. Operators see "March is a $400k month" at a glance and can click any cell to drill into the contract list filtered to that month + currency.</p>
@@ -1852,11 +1852,11 @@
 <li><strong>Window selector</strong> (3/6/12/24/36 months).</li>
 <li><strong>Print-friendly</strong> — <code>@media print</code> strips colors and adds borders for budget meetings.</li>
 </ul>
-<p><a class="glightbox" data-type="image" data-width="auto" data-height="auto" href="../../images/renewal-calendar.png" data-desc-position="bottom"><img alt="Renewal Calendar" src="../../images/renewal-calendar.png"></a></p>
+<p><a class="glightbox" data-type="image" data-width="100%" data-height="auto" href="../../images/renewal-calendar.png" data-title="Renewal Calendar" data-desc-position="bottom"><img alt="Renewal Calendar" src="../../images/renewal-calendar.png"></a></p>
 <h2 id="cost-history">Cost History<a class="headerlink" href="#cost-history" title="Permanent link">¶</a></h2>
 <p><code>/plugins/contracts/reports/cost-history/</code> renders three time-series line charts (monthly burn, 90-day renewal forecast, active contract count), one line per currency, over a configurable window (4/12/26/52 weeks). Inline SVG — no JS chart library, prints natively, dark-mode aware.</p>
 <p>Data comes from the <code>CostSnapshot</code> model. Schedule the <strong>Capture cost history snapshot</strong> Job weekly to feed the trend; on a fresh install the page renders an empty state pointing at the Job.</p>
-<p><a class="glightbox" data-type="image" data-width="auto" data-height="auto" href="../../images/cost-history.png" data-desc-position="bottom"><img alt="Cost History" src="../../images/cost-history.png"></a></p>
+<p><a class="glightbox" data-type="image" data-width="100%" data-height="auto" href="../../images/cost-history.png" data-title="Cost History" data-desc-position="bottom"><img alt="Cost History" src="../../images/cost-history.png"></a></p>
 <p>The <strong>Detect cost anomalies</strong> Job (also under <em>Contracts</em>) compares this week's snapshots to a configurable baseline (default 4 weeks ago) and emits a <code>WARNING</code>-level JobLogEntry whenever burn rate or 90-day renewal forecast moves by more than <code>threshold_pct</code> (default 20%) per currency. Wire a webhook to JobLogEntry creation to route into Slack / email / a ticket.</p>
 <h2 id="cost-summary-renewal-forecast-panels">Cost Summary + Renewal Forecast Panels<a class="headerlink" href="#cost-summary-renewal-forecast-panels" title="Permanent link">¶</a></h2>
 <p>The home dashboard contributes two cost panels (in addition to Action Required and Coverage Gaps):</p>
@@ -1984,6 +1984,6 @@
       
     
   
-<script id="init-glightbox">const lightbox = GLightbox({"touchNavigation": true, "loop": false, "zoomable": true, "draggable": true, "openEffect": "zoom", "closeEffect": "zoom", "slideEffect": "slide"});
+<script id="init-glightbox">const lightbox = GLightbox({"touchNavigation": true, "loop": false, "zoomable": true, "draggable": true, "openEffect": "fade", "closeEffect": "fade", "slideEffect": "slide"});
 document$.subscribe(()=>{ lightbox.reload(); });
 </script></body></html>

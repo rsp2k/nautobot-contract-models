@@ -1926,7 +1926,7 @@
 <h2 id="step-3-attach-the-contract-to-a-device-or-any-nautobot-object">Step 3 — Attach the Contract to a Device (or any Nautobot object)<a class="headerlink" href="#step-3-attach-the-contract-to-a-device-or-any-nautobot-object" title="Permanent link">¶</a></h2>
 <p>Open the contract detail page and click <strong>Add contract assignment</strong> in the Coverage panel. Select the target type (Device, Tenant, Location, Circuit, VirtualMachine, etc.) and the specific object.</p>
 <p>The transitive coverage helper walks Tenant → Location → Rack → Device, so a Tenant-level assignment automatically covers every Device under that Tenant.</p>
-<p><a class="glightbox" data-type="image" data-width="auto" data-height="auto" href="../../images/contract-detail.png" data-desc-position="bottom"><img alt="Contract detail" src="../../images/contract-detail.png"></a></p>
+<p><a class="glightbox" data-type="image" data-width="100%" data-height="auto" href="../../images/contract-detail.png" data-title="Contract detail" data-desc-position="bottom"><img alt="Contract detail" src="../../images/contract-detail.png"></a></p>
 <h2 id="step-4-verify-on-the-home-dashboard">Step 4 — Verify on the home dashboard<a class="headerlink" href="#step-4-verify-on-the-home-dashboard" title="Permanent link">¶</a></h2>
 <p>Navigate to the Nautobot home page. Within seconds you should see your contract appear in:</p>
 <ul>
@@ -2059,6 +2059,6 @@
       
     
   
-<script id="init-glightbox">const lightbox = GLightbox({"touchNavigation": true, "loop": false, "zoomable": true, "draggable": true, "openEffect": "zoom", "closeEffect": "zoom", "slideEffect": "slide"});
+<script id="init-glightbox">const lightbox = GLightbox({"touchNavigation": true, "loop": false, "zoomable": true, "draggable": true, "openEffect": "fade", "closeEffect": "fade", "slideEffect": "slide"});
 document$.subscribe(()=>{ lightbox.reload(); });
 </script></body></html>

@@ -140,3 +140,102 @@ a.autorefs-external:hover::after {
 div.md-typeset__table>table>tbody>tr>td>code {
     white-space: nowrap;
 }
+
+/* Screenshots ----------------------------------------------- */
+
+/* Generous breathing room, subtle border, soft shadow. The :not() chain
+ * excludes the Nautobot SVG logo (header chrome) and the NTC copyright
+ * logo (footer chrome) — without these exclusions, those small marks
+ * would inherit the screenshot styling and look broken. */
+.md-typeset img:not([src*=".svg"]):not(.copyright-logo) {
+    display: block;
+    max-width: 100%;
+    margin: 0 auto;
+    border: 1px solid var(--md-default-fg-color--lightest);
+    border-radius: 8px;
+    box-shadow: 0 2px 12px rgba(0, 0, 0, 0.08);
+    transition: transform 200ms ease, box-shadow 200ms ease;
+}
+
+/* glightbox wraps each screenshot in an <a class="glightbox">. Style the
+ * wrapper so the click target visibly matches the image, and show a
+ * "click to zoom" cursor since glightbox makes them interactive. */
+.md-typeset a.glightbox {
+    display: block;
+    margin: 3rem auto;
+    cursor: zoom-in;
+    text-decoration: none;
+}
+
+.md-typeset a.glightbox img {
+    margin: 0 auto;       /* avoid double-margin when nested in <a> */
+}
+
+/* Hover: subtle lift + brighter shadow. Cues "this is interactive"
+ * without the over-the-top scale-up that some sites use. */
+.md-typeset a.glightbox:hover img {
+    transform: translateY(-2px);
+    box-shadow: 0 6px 24px rgba(0, 0, 0, 0.18);
+}
+
+/* Honor reduced-motion preferences */
+@media (prefers-reduced-motion: reduce) {
+    .md-typeset img,
+    .md-typeset a.glightbox:hover img {
+        transition: none;
+        transform: none;
+    }
+}
+
+/* Dark mode: stronger shadow, faintly lighter border. Mirrors the
+ * "lifted artifact" feel from light mode but tuned for the dark
+ * background where soft shadows tend to disappear. */
+[data-md-color-scheme="slate"] .md-typeset img:not([src*=".svg"]):not(.copyright-logo) {
+    box-shadow: 0 4px 16px rgba(0, 0, 0, 0.45);
+    border-color: rgba(255, 255, 255, 0.1);
+}
+
+[data-md-color-scheme="slate"] .md-typeset a.glightbox:hover img {
+    box-shadow: 0 8px 28px rgba(0, 0, 0, 0.6);
+}
+
+.md-typeset a.glightbox {
+    text-align: center;
+    position: relative;
+}
+
+/* Tiny magnifier-glass icon in the bottom-right of each screenshot.
+ * Hidden by default; fades in on hover to cue "click to zoom".
+ * The SVG is the Material Design "magnify-plus-outline" icon, embedded
+ * inline so we don't need a separate asset file. */
+.md-typeset a.glightbox::after {
+    content: "";
+    position: absolute;
+    bottom: 1rem;
+    right: 1rem;
+    width: 2rem;
+    height: 2rem;
+    border-radius: 999px;
+    background-color: rgba(0, 0, 0, 0.6);
+    background-image: url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="white"><path d="M15.5 14h-.79l-.28-.27C15.41 12.59 16 11.11 16 9.5 16 5.91 13.09 3 9.5 3S3 5.91 3 9.5 5.91 16 9.5 16c1.61 0 3.09-.59 4.23-1.57l.27.28v.79l5 4.99L20.49 19l-4.99-5zm-6 0C7.01 14 5 11.99 5 9.5S7.01 5 9.5 5 14 7.01 14 9.5 11.99 14 9.5 14zm2.5-4h-2v2H9v-2H7V9h2V7h1v2h2v1z"/></svg>');
+    background-repeat: no-repeat;
+    background-position: center;
+    background-size: 1.2rem;
+    opacity: 0;
+    transform: scale(0.8);
+    transition: opacity 200ms ease, transform 200ms ease;
+    pointer-events: none;
+}
+
+.md-typeset a.glightbox:hover::after {
+    opacity: 1;
+    transform: scale(1);
+}
+
+@media (prefers-reduced-motion: reduce) {
+    .md-typeset a.glightbox::after,
+    .md-typeset a.glightbox:hover::after {
+        transition: none;
+        transform: none;
+    }
+}

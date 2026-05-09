@@ -74,7 +74,15 @@ markdown_extensions:
 
 plugins:
   - "search"
-  - "glightbox"
+  - "glightbox":
+      # Build the lightbox caption from the image's alt-text so screenshots
+      # carry a description in the zoomed view without per-image markup.
+      auto_caption: true
+      caption_position: "bottom"
+      effect: "fade"
+      slide_effect: "slide"
+      width: "100%"
+      zoomable: true
   - "mkdocstrings":
       default_handler: "python"
       handlers:
