@@ -222,6 +222,57 @@ billing_period assumption. If existing contracts haven't been re-flagged
 (annual contracts still defaulting to monthly), the calendar's per-month
 total over-counts proportionally.
 
+### Phase 10 — Renewal Calendar polish (~half session) — DONE
+
+Three usability fixes on the Phase 9 calendar after browser verification
+exposed gaps:
+
+- ✅ Current-month indicator was a 3px amber inset shadow that rendered
+  invisibly in dark mode (the gray border-bottom overlapped its bottom
+  pixel). Replaced with a 4px solid amber border-bottom on the column
+  header AND a textual "Now" pill badge inserted via `::after`. The
+  badge is the durable signal — works in forced-colors mode, on
+  printers, for color-blind users. Data-cell rails went from 5%-opacity
+  black (invisible in dark mode) to 2px amber (visible in both themes).
+- ✅ Hover tooltips: `cost.renewal_calendar()` now exposes a per-currency
+  list of contract names (`contracts_by_currency`), threaded through to
+  each cell as a `title=""` attribute. Operators hovering over a heavy
+  month see WHICH contracts contribute without clicking through.
+- ✅ Cross-link from Renewal Forecast home dashboard panel → Renewal
+  Calendar so the at-a-glance view has a path to the deep view.
+
+### Phase 11 — Bulk CSV import (~half session) — DONE
+
+**Discovery first:** Nautobot's `NautobotUIViewSet.import` action
+introspects the model + serializer + form and renders a complete CSV
+import UI for free — paste-or-upload tabs, auto-generated field
+reference table (required vs optional, format hints, FK-by-name
+lookups), end-to-end working flow. **No plugin code added.**
+
+What we shipped:
+
+- ✅ Verified the auto-generated `/contracts/import/` flow works
+  end-to-end. Imported two test rows with mixed billing periods;
+  confirmed the Monthly column on the list view normalizes correctly
+  ($4,500/year → $375/mo; $3,000/quarter → $1,000/mo).
+- ✅ `development/sample-data/contracts.csv` — six representative rows
+  (hardware support, SaaS, EA, warranty, mixed currencies, every
+  billing period choice) for operator copy-paste demos.
+- ✅ `development/sample-data/README.md` — format quirks (FK-by-name,
+  boolean literals, date format, billing_period choices, empty-cell
+  handling, one-time contract pattern).
+- ✅ Main README: "Bulk CSV import" section before "Renewal Calendar".
+
+**No tests added** — the import flow IS Nautobot's framework code, not
+ours. Writing tests for it would test Django/DRF/Nautobot rather than
+the plugin's contribution.
+
+**Caveat for future field changes:** because the import surface is
+auto-generated from the serializer, dropping a field from the model
+silently removes it from the import flow without any compile-time
+warning. Schema reviews should explicitly check that any
+operator-importable field still appears at `/import/`.
+
 ## Tech-stack decisions (final, don't relitigate)
 
 | Concern | Choice | Rationale |

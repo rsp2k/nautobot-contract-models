@@ -1,0 +1,7 @@
+name,start_date,end_date,provider,status,contract_number,billing_period,recurring_cost,one_time_cost,currency,contract_type,coverage_hours,response_time,restoration_time,notice_period_days,auto_renew,term_months,description
+Cisco SmartNet Total Care,2026-01-01,2027-01-01,Acme Networks,Active,CON-2026-0001,annual,18000.00,500.00,USD,support,24x7,4h,nbd,60,true,12,Hardware support for core switches
+Palo Alto Premium SLA,2026-03-15,2026-12-31,Acme Networks,Active,PA-PREM-2026,quarterly,3000.00,0,USD,support,24x7,1h,4h,90,false,9,Premium firewall support
+Microsoft Enterprise Agreement,2026-04-01,2029-03-31,Acme Networks,Active,EA-2026-NORTH,annual,120000.00,0,USD,saas,business_hours,nbd,nbd,120,true,36,Three-year M365 + Azure agreement
+DNS Made Easy Pro,2026-05-01,2027-05-01,Globex Corporation,Active,DME-PRO-1,monthly,99.00,0,USD,saas,best_effort,best_effort,best_effort,30,true,12,DNS hosting subscription
+Kentik Cloud Telemetry,2026-06-01,2027-06-01,Globex Corporation,Active,KT-CLD-2026,annual,48000.00,2500.00,EUR,saas,24x5,1h,4h,90,true,12,Network observability platform
+F5 BIG-IP Hardware Warranty,2026-07-15,2031-07-14,Acme Networks,Active,F5-WARRANTY-LB01,one_time,0,15000.00,USD,warranty,8x5_nbd,nbd,2d,0,false,60,Five-year hardware warranty (single payment)

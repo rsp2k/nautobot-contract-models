@@ -183,6 +183,24 @@ The `Monthly cost report` Job (under the *Contracts* group) logs the same number
 
 ⚠️ **Migration note for upgrading installs:** migration `0007_contract_billing_period` defaults every existing contract to `billing_period='monthly'`. If you have annual / quarterly contracts already in the database, edit them after upgrade — otherwise the burn-rate panels will over-count by 12x (annual) or 3x (quarterly).
 
+### Bulk CSV import
+
+Migrating from a spreadsheet of existing contracts? Use the standard Nautobot
+import flow at `Contracts → Contracts → Import` (or visit
+`/plugins/contracts/contracts/import/`). Two tabs: paste CSV body, or upload
+a file. The page auto-generates a field-reference table — required vs
+optional, format hints (date format, FK-by-name lookup syntax,
+boolean literals).
+
+**FK lookups by natural key**: `provider=Acme Networks` resolves the
+ServiceProvider by name; `status=Active` resolves the Status the same way.
+UUIDs also work.
+
+**A working sample lives at** `development/sample-data/contracts.csv` —
+six representative rows covering hardware support, SaaS, a Microsoft EA,
+a multi-year warranty, mixed currencies, and every billing-period choice.
+See `development/sample-data/README.md` for format quirks.
+
 ### Renewal Calendar
 
 A dedicated `/plugins/contracts/reports/renewal-calendar/` page renders a forward-looking, month-by-month grid of contract renewals (default 12 months, configurable up to 36). Cells encode total renewal value (recurring × term + one-time fees) with an amber saturation scale — pale wash for small months, saturated for the renewal cliff. Click any cell to drill into the contract list filtered to that month + currency.
