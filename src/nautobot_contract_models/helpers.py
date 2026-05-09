@@ -74,11 +74,12 @@ def coverage_assignments(target, *, on_date=None, ancestry_attrs=DEFAULT_ANCESTR
     return qs.order_by("-is_primary", "-contract__end_date", "contract__name")
 
 
-def has_active_coverage(target, *, on_date=None):
+def has_active_coverage(target, *, on_date=None, ancestry_attrs=DEFAULT_ANCESTRY_ATTRS):
     """Cheap boolean: does ``target`` have any active contract coverage today?
 
     Used by the CoverageGapJob and the "Uncovered Devices" home dashboard
-    panel. Faster than ``coverage_assignments(...).exists()`` because it
-    short-circuits on the first match.
+    panel. Accepts the same ``ancestry_attrs`` knob as
+    :func:`coverage_assignments` so callers can narrow the walk (e.g. to
+    check direct-only coverage on a Device).
     """
-    return coverage_assignments(target, on_date=on_date).exists()
+    return coverage_assignments(target, on_date=on_date, ancestry_attrs=ancestry_attrs).exists()

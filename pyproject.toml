@@ -73,7 +73,9 @@ ignore = [
 ]
 
 [tool.ruff.lint.per-file-ignores]
-"tests/*" = ["D"]
+# Both test trees: host-pytest (./tests/) and Django integration (src/.../tests/).
+# Test method names are already self-documenting; D102 docstrings would just repeat them.
+"**/tests/*" = ["D"]
 # Migrations: Django auto-generates schema migrations with long lines and
 # unsorted imports we shouldn't fight. The rules don't fire on hand-written
 # data migrations that are already clean (e.g. 0002_register_statuses), so
