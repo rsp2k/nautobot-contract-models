@@ -1,6 +1,8 @@
 # Dev Stack
 
-Self-contained Nautobot 3.1 + the contract-models plugin, isolated from any other Nautobot you might have running on this host.
+Self-contained Nautobot 3.1 + the contract-models plugin **+ `nautobot-app-device-lifecycle`**, isolated from any other Nautobot you might have running on this host.
+
+> **Why DLC is here:** the dev stack mirrors how operators actually run us in production — alongside DLC. The two plugins both define a `Contract*` model, and without our Phase 18 fix (`migration 0009_alter_status_related_name`) they'd clash on Django's `Status.contracts` reverse accessor and prevent Nautobot from booting. Pinning DLC into the dev image means any future regression of that fix breaks our dev stack loudly instead of silently shipping. See `docs/admin/release_notes/version_2026.5.11.md` for the full backstory.
 
 ## Prerequisites
 

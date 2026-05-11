@@ -15,6 +15,10 @@ DEBUG = is_truthy(os.environ.get("NAUTOBOT_DEBUG", "true"))
 
 PLUGINS = [
     "nautobot_contract_models",
+    # DLC is installed alongside us in the dev stack so we exercise the
+    # coexistence path real operators run. Phase 18 (migration 0009) makes
+    # this work without a Status reverse-accessor collision.
+    "nautobot_device_lifecycle_mgmt",
 ]
 
 PLUGINS_CONFIG = {
@@ -23,4 +27,6 @@ PLUGINS_CONFIG = {
         # falls within this many days from "now" surface in the alert.
         "renewal_window_days": int(os.environ.get("CONTRACT_RENEWAL_WINDOW_DAYS", "60")),
     },
+    # nautobot_device_lifecycle_mgmt uses sane defaults; no overrides needed
+    # for dev work. Add a sub-dict here if you start exercising its config.
 }
