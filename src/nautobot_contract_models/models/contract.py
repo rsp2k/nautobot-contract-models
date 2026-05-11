@@ -57,7 +57,11 @@ class Contract(PrimaryModel):
         help_text="Owning tenant. Nullable — a contract may apply globally to "
         "the operator's whole estate rather than to one tenant.",
     )
-    status = StatusField(blank=False, null=False)
+    # related_name namespace-prefixed to avoid Django reverse-accessor collision
+    # with nautobot-app-device-lifecycle's ContractLCM.status (both default to
+    # Status.contracts otherwise, which trips fields.E304 at system-check time
+    # and blocks Nautobot startup when both apps are installed).
+    status = StatusField(blank=False, null=False, related_name="contract_models_contracts")
     start_date = models.DateField(help_text="When coverage starts.")
     end_date = models.DateField(help_text="When coverage ends (renewal target).")
     renewal_terms = models.CharField(

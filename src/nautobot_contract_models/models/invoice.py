@@ -56,7 +56,10 @@ class Invoice(PrimaryModel):
         "kept as a field rather than a property so currency conversions over "
         "time can be modeled if needed.",
     )
-    status = StatusField(blank=False, null=False)
+    # related_name namespace-prefixed defensively, matching Contract.status —
+    # see contract.py for the collision rationale. DLC has no Invoice equivalent
+    # today but other plugins may.
+    status = StatusField(blank=False, null=False, related_name="contract_models_invoices")
     description = models.CharField(max_length=200, blank=True)
     comments = models.TextField(blank=True)
 

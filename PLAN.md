@@ -402,6 +402,30 @@ for some feature X, check `nautobot-server show_urls` (or the URL-list
 404 page) for `<model>_<feature>` — if the URL is auto-generated, the
 UI is free.
 
+### Phase 18 — device-lifecycle coexistence fix (~quarter session) — DONE
+
+Operator filed a bug report (screenshot of `SystemCheckError`) showing
+`nautobot-server migrate` failing when our plugin is installed alongside
+`nautobot-app-device-lifecycle`. Two `fields.E304` / `E305` errors per
+direction: both `Contract.status` and DLC's `ContractLCM.status` produce
+the same Django reverse accessor (`Status.contracts`), and Django's system
+check rejects the duplicate.
+
+- ✅ `Contract.status` declares `related_name="contract_models_contracts"`
+- ✅ `Invoice.status` declares `related_name="contract_models_invoices"`
+  (defensive — no current DLC collision but the pattern is now consistent
+  across every `StatusField` in this app)
+- ✅ Migration `0009_alter_status_related_name` — two `AlterField`
+  operations, Python-level rename only (no SQL, no column changes).
+- ✅ `tests/test_collision.py` pins the namespaced related_names so
+  removing them in a future edit is caught at test time, not at
+  operator boot time.
+- ✅ `--check --dry-run` confirms model + migration are in sync.
+
+Released as `2026.5.11`. Not building the unified-analytics bridge
+(read-through union of DLC contracts into our cost / calendar surfaces) —
+the operator chose to stop at the coexistence fix.
+
 ## Tech-stack decisions (final, don't relitigate)
 
 | Concern | Choice | Rationale |
