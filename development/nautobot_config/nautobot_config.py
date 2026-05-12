@@ -26,6 +26,10 @@ PLUGINS_CONFIG = {
         # Renewal-alert window for the Phase-5 Job. Contracts whose end_date
         # falls within this many days from "now" surface in the alert.
         "renewal_window_days": int(os.environ.get("CONTRACT_RENEWAL_WINDOW_DAYS", "60")),
+        # Phase 19: surgically remove DLM's Contracts nav group at startup so
+        # the dev stack exercises the "one canonical Contracts surface" UX.
+        # Toggleable via env var without editing this file for easy demo flipping.
+        "hide_dlm_contracts_nav": is_truthy(os.environ.get("HIDE_DLM_CONTRACTS_NAV", "true")),
     },
     # nautobot_device_lifecycle_mgmt uses sane defaults; no overrides needed
     # for dev work. Add a sub-dict here if you start exercising its config.

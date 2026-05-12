@@ -426,6 +426,66 @@ Released as `2026.5.11`. Not building the unified-analytics bridge
 (read-through union of DLC contracts into our cost / calendar surfaces) —
 the operator chose to stop at the coexistence fix.
 
+### Phase 19 — absorb DLM's contracts (~half session) — DONE
+
+After Phase 18 unblocked installation, operators with both plugins
+installed still saw two parallel "Contracts" surfaces. This phase turns
+the "we don't fight" coexistence into "we absorb": one-way data migration
++ opt-in nav hide so our `Contract` becomes the canonical contracts
+surface when the operator chooses.
+
+Three findings made the absorb realistic:
+1. `ContractLCM` is structurally a subset of our `Contract` (no
+   recurring/billing, no SLA fields, no auto_renew). Our model is a
+   superset on every meaningful axis.
+2. DLM's own `DLMToNautobotCoreModelMigration` Job *explicitly skips*
+   `ContractLCM` because Nautobot core has no Contract destination.
+   We fill that gap — we're the natural destination DLM never had.
+3. `ContractLCM` is "leaf-ish" in DLM's graph: only `Device.device_contracts`
+   M2M (reverse) + one signal-bound Relationship to InventoryItem. No
+   other DLM model has an FK to it; absorbing it doesn't break
+   Hardware/Software/CVE lifecycle features.
+
+- ✅ `MigrateContractLCMToContract` Job (in `jobs.py`) copies each
+  `ContractLCM` → our `Contract`, including `devices` M2M →
+  `ContractAssignment(content_type=dcim.Device, object_id=...)` rows.
+  Idempotent via Nautobot custom-field marker (`migrated_to_contract_models`),
+  mirroring DLM's own `migrated_to_core_model_flag` pattern.
+- ✅ Best-effort regex mapping for DLM's free-text `support_level` and
+  `contract_type` → our enum fields. Unmappable values warn-and-leave-blank.
+- ✅ `hide_dlm_contracts_nav` PLUGINS_CONFIG flag (default `False`).
+  When `True` AND DLM is installed, `AppConfig.ready()` connects a
+  `request_started` signal that — on first HTTP request — surgically
+  pops DLM's `Contracts` group from the `Device Lifecycle` nav tab.
+  Deferred via signal because plugin load-order isn't guaranteed; a
+  direct call from `ready()` would be a no-op if our app loads before DLM.
+- ✅ `tests/test_migration_job.py` (8 tests) — field mapping, M2M
+  conversion, idempotency, dry-run, provider strategies, regex mapping.
+  Gated `@skipUnless(apps.is_installed('nautobot_device_lifecycle_mgmt'))`
+  so the suite runs in the dev container and skips on the host.
+- ✅ `tests/test_nav_hide.py` (4 tests) — registry snapshot/restore
+  per test, surgical removal of `Contracts` group, sibling preservation,
+  DLM-not-installed no-op.
+- ✅ End-to-end verified in the live stack: 3 seeded `ContractLCM` rows
+  with provider + devices → migrated to 3 `Contract` + 2 `ContractAssignment`
+  rows; re-run reports 0 migrated (idempotency stamp works); rendered
+  home page contained 0 references to `/plugins/nautobot-device-lifecycle-mgmt/contract/`
+  and 5 references to `/plugins/nautobot-device-lifecycle-mgmt/hardware/`
+  (Hardware Notices group preserved).
+
+Out of scope, deferred:
+- Suppressing DLM's `DeviceContractLCM` template-content panel on Device
+  detail. Operators may still see DLM's contracts table there even with
+  nav hidden. Defer to Phase 20 if it becomes annoying.
+- URL redirect middleware for DLM's `/plugins/nautobot-device-lifecycle-mgmt/contract/...`
+  paths. Avoided because it would break DLM REST API consumers and
+  external bookmarks.
+- Two-way sync. One-way only.
+- Upstream PR on DLM adding a supported `DISABLE_CONTRACTS_SURFACE` flag.
+  The right long-term answer; this release ships the pragmatic in-between.
+
+Released as `2026.5.12`.
+
 ## Tech-stack decisions (final, don't relitigate)
 
 | Concern | Choice | Rationale |

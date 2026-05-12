@@ -1081,6 +1081,45 @@
 </li>
       
         <li class="md-nav__item">
+  <a href="#coexistence-with-nautobot-app-device-lifecycle" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Coexistence with nautobot-app-device-lifecycle
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Coexistence with nautobot-app-device-lifecycle">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#1-migrate-contractlcm-data-into-our-model" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        1. Migrate ContractLCM data into our model
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#2-hide-dlms-contracts-sidebar-group" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        2. Hide DLM's Contracts sidebar group
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
   <a href="#upgrading-from-pre-phase-8" class="md-nav__link">
     <span class="md-ellipsis">
       
@@ -1223,6 +1262,8 @@
       
         
       
+        
+      
     
     
     
@@ -1273,6 +1314,34 @@
           </label>
           <ul class="md-nav__list" data-md-scrollfix="">
             
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../release_notes/version_2026.5.12/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    v2026.5.12
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
               
             
               
@@ -1859,6 +1928,45 @@
 </li>
       
         <li class="md-nav__item">
+  <a href="#coexistence-with-nautobot-app-device-lifecycle" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Coexistence with nautobot-app-device-lifecycle
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Coexistence with nautobot-app-device-lifecycle">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#1-migrate-contractlcm-data-into-our-model" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        1. Migrate ContractLCM data into our model
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#2-hide-dlms-contracts-sidebar-group" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        2. Hide DLM's Contracts sidebar group
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
   <a href="#upgrading-from-pre-phase-8" class="md-nav__link">
     <span class="md-ellipsis">
       
@@ -1999,8 +2107,68 @@
 <td><code>60</code></td>
 <td>Days from today to look ahead. Drives the renewal-check Job's default and the Renewal Forecast home dashboard panel.</td>
 </tr>
+<tr>
+<td><code>hide_dlm_contracts_nav</code></td>
+<td><code>False</code></td>
+<td>When <code>True</code> AND <code>nautobot-app-device-lifecycle-mgmt</code> is installed, surgically removes DLM's <code>Contracts</code> group from the <strong>Device Lifecycle</strong> sidebar. Operator-controlled; off by default. See <a href="#coexistence-with-nautobot-app-device-lifecycle">Coexistence with nautobot-app-device-lifecycle</a>.</td>
+</tr>
 </tbody>
 </table>
+<h2 id="coexistence-with-nautobot-app-device-lifecycle">Coexistence with <code>nautobot-app-device-lifecycle</code><a class="headerlink" href="#coexistence-with-nautobot-app-device-lifecycle" title="Permanent link">¶</a></h2>
+<p><code>nautobot-app-device-lifecycle-mgmt</code> (DLM) ships a <code>ContractLCM</code> model that overlaps with our <code>Contract</code>. Since v2026.5.11 the two plugins coexist cleanly in the same Nautobot. v2026.5.12 adds two opt-in features for operators who want our <code>Contract</code> to be the canonical contracts surface:</p>
+<h3 id="1-migrate-contractlcm-data-into-our-model">1. Migrate ContractLCM data into our model<a class="headerlink" href="#1-migrate-contractlcm-data-into-our-model" title="Permanent link">¶</a></h3>
+<p>Run the <strong>Migrate ContractLCM → Contract</strong> Job (under <em>Apps → Jobs → Contracts</em>):</p>
+<ol>
+<li><em>Apps → Jobs → "Migrate ContractLCM → Contract"</em> — click the row, then <strong>Edit</strong> → check <strong>Enabled</strong> → <strong>Save</strong>. (Nautobot's job-permission default is disabled.)</li>
+<li>Click <strong>Run Job</strong>.</li>
+<li>Set <code>dry_run=True</code> for the first invocation. Read the JobLogEntry output:<ul>
+<li>Counts: <code>migrated</code>, <code>skipped</code>, <code>assignments</code> (devices converted into <code>ContractAssignment</code> rows), <code>warnings</code>.</li>
+<li>Per-row <code>[dry-run] Would migrate...</code> lines.</li>
+<li><code>[unmapped]</code> warnings for rows whose <code>support_level</code> or <code>contract_type</code> free-text didn't match any known pattern. Fix the source values in DLM's UI, or accept that those fields land blank.</li>
+</ul>
+</li>
+<li>Re-run with <code>dry_run=False</code> to commit.</li>
+<li>Re-run a third time — verify <code>migrated: 0</code> (idempotency stamp prevents duplicates).</li>
+</ol>
+<p>Each migrated <code>ContractLCM</code> is stamped with a custom field <code>migrated_to_contract_models=True</code>. Source rows are <strong>not deleted</strong> — operators delete from DLM's UI when comfortable that the migration is correct.</p>
+<p>Job options:</p>
+<table>
+<thead>
+<tr>
+<th>Variable</th>
+<th>Default</th>
+<th>Meaning</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>dry_run</code></td>
+<td><code>True</code></td>
+<td>Log planned actions without writing. Always run dry first.</td>
+</tr>
+<tr>
+<td><code>default_billing_period</code></td>
+<td><code>Monthly</code></td>
+<td>DLM's <code>ContractLCM.cost</code> is a flat decimal with no cadence — we interpret it as recurring at this cadence. Set to <code>Annual</code> if your DLM contracts stored annual prices.</td>
+</tr>
+<tr>
+<td><code>provider_match_strategy</code></td>
+<td><code>Match by name; create ServiceProvider if missing</code></td>
+<td>Alternative: <code>Match by name; skip the contract if no ServiceProvider matches</code>.</td>
+</tr>
+</tbody>
+</table>
+<h3 id="2-hide-dlms-contracts-sidebar-group">2. Hide DLM's Contracts sidebar group<a class="headerlink" href="#2-hide-dlms-contracts-sidebar-group" title="Permanent link">¶</a></h3>
+<p>After migration, set the opt-in flag:</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-5-1" name="__codelineno-5-1" href="#__codelineno-5-1"></a><span class="c1"># nautobot_config.py</span>
+<a id="__codelineno-5-2" name="__codelineno-5-2" href="#__codelineno-5-2"></a><span class="n">PLUGINS_CONFIG</span> <span class="o">=</span> <span class="p">{</span>
+<a id="__codelineno-5-3" name="__codelineno-5-3" href="#__codelineno-5-3"></a>    <span class="s2">"nautobot_contract_models"</span><span class="p">:</span> <span class="p">{</span>
+<a id="__codelineno-5-4" name="__codelineno-5-4" href="#__codelineno-5-4"></a>        <span class="s2">"hide_dlm_contracts_nav"</span><span class="p">:</span> <span class="kc">True</span><span class="p">,</span>
+<a id="__codelineno-5-5" name="__codelineno-5-5" href="#__codelineno-5-5"></a>    <span class="p">},</span>
+<a id="__codelineno-5-6" name="__codelineno-5-6" href="#__codelineno-5-6"></a><span class="p">}</span>
+</code></pre></div>
+<p>Restart Nautobot. DLM's <code>Contracts</code> and <code>Vendors</code> sub-items disappear from the <strong>Device Lifecycle</strong> sidebar; <code>Hardware Notices</code>, <code>Software Lifecycle</code>, and <code>Reports</code> remain.</p>
+<p>DLM's data, URLs (<code>/plugins/nautobot-device-lifecycle-mgmt/contract/...</code>), REST API, and <code>DeviceContractLCM</code> template-content panel on the Device detail page all keep working — only the sidebar nav is affected. Operators with scripts or external integrations hitting DLM's contract endpoints don't break.</p>
 <h2 id="upgrading-from-pre-phase-8">Upgrading from pre-Phase-8<a class="headerlink" href="#upgrading-from-pre-phase-8" title="Permanent link">¶</a></h2>
 <p>Migration <code>0007_contract_billing_period</code> defaults every existing <code>Contract</code> to <code>billing_period='monthly'</code>. If you have <strong>annual</strong> or <strong>quarterly</strong> contracts already in the database, their <code>recurring_cost</code> will be interpreted as a monthly figure after upgrade — over-counting the burn rate panels by 12x (annual) or 3x (quarterly).</p>
 <p>Two ways to fix:</p>
@@ -2011,10 +2179,10 @@
 <li>Click <strong>Edit Selected</strong> and change <code>billing_period</code></li>
 </ol>
 <p><strong>Option 2 — Django ORM (faster for many contracts)</strong></p>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-5-1" name="__codelineno-5-1" href="#__codelineno-5-1"></a><span class="c1"># nautobot-server shell</span>
-<a id="__codelineno-5-2" name="__codelineno-5-2" href="#__codelineno-5-2"></a><span class="kn">from</span><span class="w"> </span><span class="nn">nautobot_contract_models.models</span><span class="w"> </span><span class="kn">import</span> <span class="n">Contract</span>
-<a id="__codelineno-5-3" name="__codelineno-5-3" href="#__codelineno-5-3"></a><span class="n">Contract</span><span class="o">.</span><span class="n">objects</span><span class="o">.</span><span class="n">filter</span><span class="p">(</span><span class="n">name__icontains</span><span class="o">=</span><span class="s2">"EA"</span><span class="p">)</span><span class="o">.</span><span class="n">update</span><span class="p">(</span><span class="n">billing_period</span><span class="o">=</span><span class="s2">"annual"</span><span class="p">)</span>
-<a id="__codelineno-5-4" name="__codelineno-5-4" href="#__codelineno-5-4"></a><span class="n">Contract</span><span class="o">.</span><span class="n">objects</span><span class="o">.</span><span class="n">filter</span><span class="p">(</span><span class="n">name__icontains</span><span class="o">=</span><span class="s2">"quarterly"</span><span class="p">)</span><span class="o">.</span><span class="n">update</span><span class="p">(</span><span class="n">billing_period</span><span class="o">=</span><span class="s2">"quarterly"</span><span class="p">)</span>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-6-1" name="__codelineno-6-1" href="#__codelineno-6-1"></a><span class="c1"># nautobot-server shell</span>
+<a id="__codelineno-6-2" name="__codelineno-6-2" href="#__codelineno-6-2"></a><span class="kn">from</span><span class="w"> </span><span class="nn">nautobot_contract_models.models</span><span class="w"> </span><span class="kn">import</span> <span class="n">Contract</span>
+<a id="__codelineno-6-3" name="__codelineno-6-3" href="#__codelineno-6-3"></a><span class="n">Contract</span><span class="o">.</span><span class="n">objects</span><span class="o">.</span><span class="n">filter</span><span class="p">(</span><span class="n">name__icontains</span><span class="o">=</span><span class="s2">"EA"</span><span class="p">)</span><span class="o">.</span><span class="n">update</span><span class="p">(</span><span class="n">billing_period</span><span class="o">=</span><span class="s2">"annual"</span><span class="p">)</span>
+<a id="__codelineno-6-4" name="__codelineno-6-4" href="#__codelineno-6-4"></a><span class="n">Contract</span><span class="o">.</span><span class="n">objects</span><span class="o">.</span><span class="n">filter</span><span class="p">(</span><span class="n">name__icontains</span><span class="o">=</span><span class="s2">"quarterly"</span><span class="p">)</span><span class="o">.</span><span class="n">update</span><span class="p">(</span><span class="n">billing_period</span><span class="o">=</span><span class="s2">"quarterly"</span><span class="p">)</span>
 </code></pre></div>
 <p>After the fix, run <strong>Capture cost history snapshot</strong> to refresh the trend baseline.</p>
 <h2 id="static-files">Static files<a class="headerlink" href="#static-files" title="Permanent link">¶</a></h2>

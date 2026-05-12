@@ -70,6 +70,16 @@ The renewal-check Job ships **disabled** (Nautobot 3.x default for newly-discove
 | Key | Type | Default | Effect |
 |---|---|---|---|
 | `renewal_window_days` | int | `60` | Window in days for the renewal-alert Job's default + the homepage "Upcoming Renewals" panel |
+| `hide_dlm_contracts_nav` | bool | `False` | When `True` AND `nautobot-app-device-lifecycle-mgmt` is installed, removes DLM's `Contracts` sidebar group so operators see one canonical contracts surface (ours). DLM's other features remain intact. See [docs/admin/install.md → Coexistence](https://nautobot-contract-models.readthedocs.io/en/latest/admin/install/#coexistence-with-nautobot-app-device-lifecycle). |
+
+## Coexistence with `nautobot-app-device-lifecycle`
+
+Both plugins ship a "Contracts" surface; theirs (`ContractLCM`) is structurally simpler than ours. Since v2026.5.11 the two coexist without colliding on Django's `Status` reverse accessor. v2026.5.12 adds:
+
+- A one-way idempotent **Migrate ContractLCM → Contract** Job that copies every `ContractLCM` (and its device M2M, converted to our polymorphic `ContractAssignment`) into our model.
+- The opt-in `hide_dlm_contracts_nav` flag (see above).
+
+Full operator runbook: [docs/admin/install.md → Coexistence with nautobot-app-device-lifecycle](https://nautobot-contract-models.readthedocs.io/en/latest/admin/install/#coexistence-with-nautobot-app-device-lifecycle).
 
 ## REST API
 

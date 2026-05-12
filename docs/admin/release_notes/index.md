@@ -4,6 +4,7 @@ This section tracks released versions of `nautobot-contract-models`. Versions fo
 
 | Version | Released | Highlights |
 |---|---|---|
+| [v2026.5.12](version_2026.5.12.md) | 2026-05-12 | Absorb DLM's contracts: one-way `MigrateContractLCMToContract` Job + opt-in `hide_dlm_contracts_nav` flag. |
 | [v2026.5.11](version_2026.5.11.md) | 2026-05-11 | Coexistence fix: namespace `related_name` on `Contract.status` / `Invoice.status` so the app works alongside `nautobot-app-device-lifecycle`. |
 | [v2026.5.9](version_2026.5.9.md) | 2026-05-09 | First public release. Sixteen-phase build. |
 

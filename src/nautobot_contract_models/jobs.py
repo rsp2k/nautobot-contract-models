@@ -12,15 +12,26 @@ webhook hooks to JobLogEntry creation if they want notifications routed
 into Slack / email / PagerDuty.
 """
 
+import re
 from datetime import date, timedelta
+from decimal import Decimal
 
+from django.apps import apps as django_apps
 from django.conf import settings
-from nautobot.apps.jobs import BooleanVar, IntegerVar, Job, ObjectVar, register_jobs
+from django.contrib.contenttypes.models import ContentType
+from django.db import transaction
+from nautobot.apps.jobs import BooleanVar, ChoiceVar, IntegerVar, Job, ObjectVar, register_jobs
 from nautobot.dcim.models import Device, Location
 
 from nautobot_contract_models import cost, priority
+from nautobot_contract_models.choices import (
+    BillingPeriodChoices,
+    ContractTypeChoices,
+    CoverageHoursChoices,
+    ResponseTimeChoices,
+)
 from nautobot_contract_models.helpers import has_active_coverage
-from nautobot_contract_models.models import Contract
+from nautobot_contract_models.models import Contract, ContractAssignment, ServiceProvider
 
 NAME = "Contracts"
 
@@ -377,4 +388,375 @@ class CostAnomalyJob(Job):
         return len(anomalies)
 
 
-register_jobs(RenewalCheckJob, CoverageGapJob, CostReportJob, CostHistoryJob, CostAnomalyJob)
+# --- Phase 19: DLM ContractLCM → Contract migration --------------------------
+#
+# DLM stores `support_level` and `contract_type` as free-text on every
+# ContractLCM, while we model them as enums (Phase 7). We do a best-effort
+# regex mapping on migration and warn-and-leave-blank when no pattern matches.
+# Operators can fix unmapped values in the UI afterward — partial mapping is
+# more useful than dropping the migration when one row's free-text is weird.
+
+_SUPPORT_LEVEL_PATTERNS = (
+    # Each tuple: (regex, coverage_hours_choice_or_blank, response_time_choice_or_blank)
+    (re.compile(r"\b8x5.*nbd\b|\b8-5.*nbd\b", re.I), CoverageHoursChoices.HOURS_8X5_NBD, ResponseTimeChoices.NBD),
+    (re.compile(r"\b24x7\b|\b24/7\b|\b24-7\b", re.I), CoverageHoursChoices.HOURS_24X7, ""),
+    (re.compile(r"\b24x5\b|\b24-5\b", re.I), CoverageHoursChoices.HOURS_24X5, ""),
+    (re.compile(r"business hours|\b9-5\b|9 to 5", re.I), CoverageHoursChoices.HOURS_BUSINESS, ""),
+    (re.compile(r"best.?effort", re.I), CoverageHoursChoices.HOURS_BEST_EFFORT, ResponseTimeChoices.BEST_EFFORT),
+    (re.compile(r"\bnbd\b|next business day", re.I), "", ResponseTimeChoices.NBD),
+    # [\s-]* tolerates both "4 hour" and "4-hour" (real-world copy uses both).
+    (re.compile(r"\b1[\s-]*hour\b|\b1h\b", re.I), "", ResponseTimeChoices.HOURS_1),
+    (re.compile(r"\b2[\s-]*hours?\b|\b2h\b", re.I), "", ResponseTimeChoices.HOURS_2),
+    (re.compile(r"\b4[\s-]*hours?\b|\b4h\b", re.I), "", ResponseTimeChoices.HOURS_4),
+    (re.compile(r"\b8[\s-]*hours?\b|\b8h\b", re.I), "", ResponseTimeChoices.HOURS_8),
+)
+
+
+def _map_support_level(value):
+    """Best-effort regex mapping. Returns ``(coverage_hours, response_time)`` — either may be ``""``.
+
+    Multiple patterns may match the same string ("8x5xNBD" hits both 8x5 and NBD); we
+    take the first non-blank value seen for each axis. Empty input returns ``("", "")``.
+    """
+    if not value:
+        return ("", "")
+    coverage, response = "", ""
+    for pattern, cov, resp in _SUPPORT_LEVEL_PATTERNS:
+        if pattern.search(value):
+            if cov and not coverage:
+                coverage = cov
+            if resp and not response:
+                response = resp
+    return (coverage, response)
+
+
+_CONTRACT_TYPE_PATTERNS = (
+    (re.compile(r"saas", re.I), ContractTypeChoices.SAAS),
+    (re.compile(r"hardware|\bhw\b|maintenance", re.I), ContractTypeChoices.HARDWARE),
+    (re.compile(r"software|subscription|license", re.I), ContractTypeChoices.SOFTWARE),
+    (re.compile(r"managed", re.I), ContractTypeChoices.MANAGED),
+    (re.compile(r"professional|consulting", re.I), ContractTypeChoices.SERVICES),
+    (re.compile(r"warranty", re.I), ContractTypeChoices.WARRANTY),
+    (re.compile(r"support", re.I), ContractTypeChoices.SUPPORT),
+    # NB: we deliberately don't auto-map to OTHER — operators may want to pick
+    # something more specific manually after migration.
+)
+
+
+def _map_contract_type(value):
+    """Best-effort regex mapping. Returns a ContractTypeChoices value or ``""``."""
+    if not value:
+        return ""
+    for pattern, choice in _CONTRACT_TYPE_PATTERNS:
+        if pattern.search(value):
+            return choice
+    return ""
+
+
+def _resolve_status(lcm_status):
+    """Map a ContractLCM.status to a Status valid for our Contract model.
+
+    StatusFields bind to extras.Status via ContentType, so a Status set up for
+    DLM's ContractLCM may or may not be on our Contract's status ContentType.
+    Strategy: (1) accept the same Status row if it's bound to Contract;
+    (2) try a same-name lookup on the Contract-bound queryset; (3) fall back
+    to ``Active`` for Contract; (4) return None and let the caller skip.
+    """
+    from nautobot.extras.models import Status
+
+    valid = Status.objects.get_for_model(Contract)
+    if lcm_status and valid.filter(pk=lcm_status.pk).exists():
+        return lcm_status
+    if lcm_status:
+        match = valid.filter(name=lcm_status.name).first()
+        if match:
+            return match
+    return valid.filter(name="Active").first()
+
+
+class MigrateContractLCMToContract(Job):
+    """Migrate every ContractLCM row from ``nautobot-app-device-lifecycle-mgmt`` into our Contract model.
+
+    Mirrors DLM's own :class:`DLMToNautobotCoreModelMigration` Job idiom: each
+    source ContractLCM gets stamped with a custom-field marker
+    ``migrated_to_contract_models=True`` after migration, so re-runs are
+    idempotent — already-stamped rows are excluded from the queryset.
+
+    One-way. Source ContractLCM rows are stamped but NOT deleted; operators
+    delete from DLM's UI when they're confident the migration is correct.
+
+    Maps the ``ContractLCM.devices`` M2M into our polymorphic
+    :class:`ContractAssignment` rows (one per Device, content_type=dcim.Device).
+    """
+
+    dry_run = BooleanVar(
+        default=True,
+        description=(
+            "Log planned actions without writing. Run with dry_run=True first to verify "
+            "the field mapping and provider matching, then again with dry_run=False to commit."
+        ),
+    )
+    default_billing_period = ChoiceVar(
+        choices=BillingPeriodChoices.CHOICES,
+        default=BillingPeriodChoices.MONTHLY,
+        description=(
+            "DLM's ContractLCM.cost is a flat decimal with no cadence — we interpret it "
+            "as recurring at this cadence. If your DLM contracts stored annual prices, "
+            "set this to 'Annual'."
+        ),
+    )
+    provider_match_strategy = ChoiceVar(
+        choices=(
+            ("by_name", "Match by name; create ServiceProvider if missing"),
+            ("by_name_strict", "Match by name; skip the contract if no ServiceProvider matches"),
+        ),
+        default="by_name",
+        description="How to map DLM's ProviderLCM to our ServiceProvider.",
+    )
+
+    class Meta:
+        """Job metadata."""
+
+        name = "Migrate ContractLCM → Contract"
+        description = (
+            "Copy every ContractLCM row from nautobot-app-device-lifecycle-mgmt into our "
+            "Contract model. Idempotent — re-running skips already-migrated rows. "
+            "One-way: source ContractLCM rows are stamped with a custom field but NOT deleted."
+        )
+        grouping = NAME
+        has_sensitive_variables = False
+
+    def run(self, dry_run, default_billing_period, provider_match_strategy):
+        """Walk unmarked ContractLCM rows, copy to Contract + ContractAssignment, stamp the source.
+
+        Returns a dict summarizing counts; surfaces as the JobResult "result" field.
+        """
+        if not django_apps.is_installed("nautobot_device_lifecycle_mgmt"):
+            self.logger.error("nautobot-app-device-lifecycle-mgmt is not installed; nothing to migrate.")
+            return {"migrated": 0, "skipped": 0, "warnings": 0, "assignments": 0, "dry_run": dry_run}
+
+        from nautobot.extras.choices import CustomFieldTypeChoices
+        from nautobot.extras.models import CustomField
+        from nautobot_device_lifecycle_mgmt.models import ContractLCM
+
+        # 1. Ensure the marker custom field exists and is bound to ContractLCM.
+        # Mirrors DLM's own `migrated_to_core_model_flag` pattern in their
+        # DLMToNautobotCoreModelMigration job.
+        contractlcm_ct = ContentType.objects.get_for_model(ContractLCM)
+        if not dry_run:
+            cf, created = CustomField.objects.get_or_create(
+                key="migrated_to_contract_models",
+                defaults={
+                    "label": "Migrated to Contract Models",
+                    "type": CustomFieldTypeChoices.TYPE_BOOLEAN,
+                    "default": False,
+                },
+            )
+            cf.content_types.add(contractlcm_ct)
+            if created:
+                self.logger.info("Created custom field 'migrated_to_contract_models' on ContractLCM.")
+
+        # 2. Query unmarked rows. We use `__contains={...: True}` rather than
+        # `__migrated_to_contract_models=True` because Django's JSONField
+        # path-extract returns NULL for absent keys, and `.exclude(=True)`
+        # then drops those rows too (NULL comparisons aren't True). The
+        # `__contains` lookup is a JSON subset-match — absent keys simply
+        # don't match, so they survive the exclude.
+        marker = {"migrated_to_contract_models": True}
+        unmarked = (
+            ContractLCM.objects.exclude(_custom_field_data__contains=marker)
+            .select_related("provider")
+            .prefetch_related("devices")
+        )
+
+        total = unmarked.count()
+        if total == 0:
+            self.logger.info("All ContractLCM rows are already migrated. Nothing to do.")
+            return {"migrated": 0, "skipped": 0, "warnings": 0, "assignments": 0, "dry_run": dry_run}
+
+        self.logger.info("Found %d ContractLCM row(s) to consider (dry_run=%s).", total, dry_run)
+
+        migrated = 0
+        assignments_created = 0
+        skipped = 0
+        warnings = 0
+        device_ct = ContentType.objects.get_for_model(Device)
+
+        for lcm in unmarked:
+            outcome = self._migrate_one(
+                lcm=lcm,
+                dry_run=dry_run,
+                default_billing_period=default_billing_period,
+                provider_match_strategy=provider_match_strategy,
+                device_ct=device_ct,
+            )
+            if outcome.get("skipped"):
+                skipped += 1
+            else:
+                migrated += 1
+            assignments_created += outcome.get("assignments", 0)
+            warnings += outcome.get("warnings", 0)
+
+        summary_prefix = "DRY-RUN: " if dry_run else ""
+        self.logger.info(
+            "%sMigration complete: %d migrated, %d skipped, %d assignment row(s) created, %d warning(s).",
+            summary_prefix,
+            migrated,
+            skipped,
+            assignments_created,
+            warnings,
+        )
+        return {
+            "migrated": migrated,
+            "skipped": skipped,
+            "assignments": assignments_created,
+            "warnings": warnings,
+            "dry_run": dry_run,
+        }
+
+    def _migrate_one(self, *, lcm, dry_run, default_billing_period, provider_match_strategy, device_ct):
+        """Migrate a single ContractLCM row. Returns ``{skipped, assignments, warnings}``."""
+        warnings = 0
+
+        # --- Provider mapping ---
+        provider_name = lcm.provider.name if lcm.provider else None
+        if not provider_name:
+            self.logger.warning(
+                "[skip] ContractLCM '%s' has no provider; skipping.",
+                lcm.name,
+                extra={"object": lcm},
+            )
+            return {"skipped": True, "assignments": 0, "warnings": 1}
+
+        # --- Date validation (ours requires start_date AND end_date) ---
+        if lcm.start is None or lcm.end is None:
+            self.logger.warning(
+                "[skip] ContractLCM '%s' missing start/end dates; skipping (ours requires both).",
+                lcm.name,
+                extra={"object": lcm},
+            )
+            return {"skipped": True, "assignments": 0, "warnings": 1}
+
+        # --- Status mapping ---
+        status = _resolve_status(lcm.status)
+        if status is None:
+            self.logger.warning(
+                "[skip] ContractLCM '%s' has no usable Status (and no 'Active' Status exists for Contract).",
+                lcm.name,
+                extra={"object": lcm},
+            )
+            return {"skipped": True, "assignments": 0, "warnings": 1}
+
+        # --- Free-text → enum mappings (best-effort, warn-and-leave-blank) ---
+        support_level = (lcm.support_level or "").strip()
+        coverage_hours, response_time = _map_support_level(support_level)
+        if support_level and not (coverage_hours or response_time):
+            self.logger.warning(
+                "[unmapped] ContractLCM '%s' support_level=%r — leaving coverage_hours/response_time blank.",
+                lcm.name,
+                support_level,
+                extra={"object": lcm},
+            )
+            warnings += 1
+
+        contract_type_raw = (lcm.contract_type or "").strip()
+        contract_type = _map_contract_type(contract_type_raw)
+        if contract_type_raw and not contract_type:
+            self.logger.warning(
+                "[unmapped] ContractLCM '%s' contract_type=%r — leaving blank.",
+                lcm.name,
+                contract_type_raw,
+                extra={"object": lcm},
+            )
+            warnings += 1
+
+        currency = (lcm.currency or "").strip() or "USD"
+        cost_value = lcm.cost if lcm.cost is not None else Decimal("0.00")
+        billing_period = default_billing_period if cost_value > 0 else BillingPeriodChoices.MONTHLY
+        device_count = lcm.devices.count()
+
+        if dry_run:
+            self.logger.info(
+                "[dry-run] Would migrate ContractLCM '%s' → Contract "
+                "(provider=%s, cost=%s %s/%s, devices=%d, status=%s).",
+                lcm.name,
+                provider_name,
+                cost_value,
+                currency,
+                billing_period,
+                device_count,
+                status.name,
+                extra={"object": lcm},
+            )
+            return {"skipped": False, "assignments": device_count, "warnings": warnings}
+
+        # --- Commit phase: provider, contract, assignments, source stamp — all in one txn ---
+        with transaction.atomic():
+            provider = ServiceProvider.objects.filter(name=provider_name).first()
+            if provider is None:
+                if provider_match_strategy == "by_name_strict":
+                    self.logger.warning(
+                        "[skip] No ServiceProvider matches %r for ContractLCM '%s' (strict mode).",
+                        provider_name,
+                        lcm.name,
+                        extra={"object": lcm},
+                    )
+                    return {"skipped": True, "assignments": 0, "warnings": warnings + 1}
+                provider = ServiceProvider.objects.create(
+                    name=provider_name,
+                    description="Migrated from nautobot-app-device-lifecycle-mgmt",
+                )
+                self.logger.info("[provider+] Created ServiceProvider '%s'.", provider_name)
+
+            new_contract = Contract.objects.create(
+                name=lcm.name,
+                contract_number=(lcm.number or "")[:100],
+                provider=provider,
+                status=status,
+                start_date=lcm.start,
+                end_date=lcm.end,
+                recurring_cost=cost_value,
+                billing_period=billing_period,
+                currency=currency,
+                contract_type=contract_type,
+                coverage_hours=coverage_hours,
+                response_time=response_time,
+                description=f"[Migrated from DLM ContractLCM {lcm.pk}]"[:200],
+                comments=lcm.comments or "",
+            )
+
+            assignments = 0
+            for device in lcm.devices.all():
+                ContractAssignment.objects.create(
+                    contract=new_contract,
+                    content_type=device_ct,
+                    object_id=device.pk,
+                    is_primary=False,
+                )
+                assignments += 1
+
+            # Stamp the source as migrated.
+            lcm._custom_field_data = dict(lcm._custom_field_data or {})
+            lcm._custom_field_data["migrated_to_contract_models"] = True
+            lcm.save()
+
+        self.logger.info(
+            "[ok] Migrated ContractLCM '%s' → Contract (devices=%d).",
+            lcm.name,
+            assignments,
+            extra={"object": lcm},
+        )
+        return {"skipped": False, "assignments": assignments, "warnings": warnings}
+
+
+# --- end Phase 19 ------------------------------------------------------------
+
+
+register_jobs(
+    RenewalCheckJob,
+    CoverageGapJob,
+    CostReportJob,
+    CostHistoryJob,
+    CostAnomalyJob,
+    MigrateContractLCMToContract,
+)
