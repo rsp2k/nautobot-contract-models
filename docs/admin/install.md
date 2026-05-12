@@ -83,47 +83,12 @@ The worker restart is important — newly-discovered Jobs won't appear until the
 
 ## Coexistence with `nautobot-app-device-lifecycle`
 
-`nautobot-app-device-lifecycle-mgmt` (DLM) ships a `ContractLCM` model that overlaps with our `Contract`. Since v2026.5.11 the two plugins coexist cleanly in the same Nautobot. v2026.5.12 adds two opt-in features for operators who want our `Contract` to be the canonical contracts surface:
+If you have both this plugin and `nautobot-app-device-lifecycle-mgmt` (DLM) installed, you have two opt-in features available:
 
-### 1. Migrate ContractLCM data into our model
+- A one-way idempotent **Migrate ContractLCM → Contract** Job that copies DLM's `ContractLCM` rows into our `Contract` model (including device M2M → polymorphic `ContractAssignment`).
+- The **`hide_dlm_contracts_nav`** PLUGINS_CONFIG flag (see the table above) that removes DLM's Contracts sidebar group so operators see one canonical contracts surface — ours.
 
-Run the **Migrate ContractLCM → Contract** Job (under *Apps → Jobs → Contracts*):
-
-1. *Apps → Jobs → "Migrate ContractLCM → Contract"* — click the row, then **Edit** → check **Enabled** → **Save**. (Nautobot's job-permission default is disabled.)
-2. Click **Run Job**.
-3. Set `dry_run=True` for the first invocation. Read the JobLogEntry output:
-    - Counts: `migrated`, `skipped`, `assignments` (devices converted into `ContractAssignment` rows), `warnings`.
-    - Per-row `[dry-run] Would migrate...` lines.
-    - `[unmapped]` warnings for rows whose `support_level` or `contract_type` free-text didn't match any known pattern. Fix the source values in DLM's UI, or accept that those fields land blank.
-4. Re-run with `dry_run=False` to commit.
-5. Re-run a third time — verify `migrated: 0` (idempotency stamp prevents duplicates).
-
-Each migrated `ContractLCM` is stamped with a custom field `migrated_to_contract_models=True`. Source rows are **not deleted** — operators delete from DLM's UI when comfortable that the migration is correct.
-
-Job options:
-
-| Variable | Default | Meaning |
-|---|---|---|
-| `dry_run` | `True` | Log planned actions without writing. Always run dry first. |
-| `default_billing_period` | `Monthly` | DLM's `ContractLCM.cost` is a flat decimal with no cadence — we interpret it as recurring at this cadence. Set to `Annual` if your DLM contracts stored annual prices. |
-| `provider_match_strategy` | `Match by name; create ServiceProvider if missing` | Alternative: `Match by name; skip the contract if no ServiceProvider matches`. |
-
-### 2. Hide DLM's Contracts sidebar group
-
-After migration, set the opt-in flag:
-
-```python
-# nautobot_config.py
-PLUGINS_CONFIG = {
-    "nautobot_contract_models": {
-        "hide_dlm_contracts_nav": True,
-    },
-}
-```
-
-Restart Nautobot. DLM's `Contracts` and `Vendors` sub-items disappear from the **Device Lifecycle** sidebar; `Hardware Notices`, `Software Lifecycle`, and `Reports` remain.
-
-DLM's data, URLs (`/plugins/nautobot-device-lifecycle-mgmt/contract/...`), REST API, and `DeviceContractLCM` template-content panel on the Device detail page all keep working — only the sidebar nav is affected. Operators with scripts or external integrations hitting DLM's contract endpoints don't break.
+Step-by-step walkthrough with screenshots: **[Coexistence with `nautobot-app-device-lifecycle`](dlm_coexistence.md)**.
 
 ## Upgrading from pre-Phase-8
 

@@ -118,6 +118,7 @@ nav:
           - Cost Snapshot: "models/costsnapshot.md"
   - Administrator Guide:
       - Install and Configure: "admin/install.md"
+      - Coexistence with device-lifecycle: "admin/dlm_coexistence.md"
       - Upgrade: "admin/upgrade.md"
       - Uninstall: "admin/uninstall.md"
       - Compatibility Matrix: "admin/compatibility_matrix.md"
