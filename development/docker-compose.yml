@@ -12,7 +12,12 @@ x-nautobot-common: &nautobot-common
   restart: unless-stopped
   environment:
     NAUTOBOT_ALLOWED_HOSTS: "${DOMAIN} nautobot-web localhost 127.0.0.1"
-    NAUTOBOT_DB_HOST: postgres
+    # Use the fully-qualified container name (not the service-relative
+    # name "postgres") so we don't get shadowed by a sibling compose
+    # project that happens to also have a "postgres" service on the
+    # shared `caddy` network. Docker's embedded DNS resolves bare names
+    # across all attached networks, so cross-stack collisions are real.
+    NAUTOBOT_DB_HOST: nautobot-contract-models-postgres
     NAUTOBOT_DB_PORT: "5432"
     NAUTOBOT_DB_NAME: ${NAUTOBOT_DB_NAME}
     NAUTOBOT_DB_USER: ${NAUTOBOT_DB_USER}

@@ -1,0 +1,124 @@
+{% extends 'base.html' %}
+{% comment %}
+Coverage Drift report — Phase 20.
+
+Diffs the latest CoverageSnapshot row set against the most recent
+snapshot ON OR BEFORE today - N days. Surfaces devices that LOST
+coverage (red rail, operational regression) and devices that gained
+coverage (green rail, sanity check that new contracts landed).
+
+Why "most recent on or before baseline" rather than exact-date match:
+    Operators schedule the snapshot Job weekly, not daily. An exact-date
+    lookup would frequently miss; "most recent before baseline" always
+    finds the most relevant historical state.
+
+Context (from views/coverage_drift.py ContractCoverageDriftView):
+    days, today, baseline, baseline_actual, latest_actual
+    baseline_count, latest_count
+    rows_lost, rows_newly_covered
+    has_history
+{% endcomment %}
+
+{% block title %}Coverage Drift{% endblock %}
+
+{% block content %}
+<div class="container mt-4">
+    <h1>Coverage Drift</h1>
+    <p class="text-muted">
+        Devices that gained or lost contract coverage in the configured window.
+        Compares the most recent <code>CoverageSnapshot</code> rows against the most recent set on or before
+        <strong>{{ baseline|date:"SHORT_DATE_FORMAT" }}</strong> ({{ days }} days ago).
+    </p>
+
+    <form method="get" class="mb-3">
+        <label for="drift-window" class="form-label">Window (days)</label>
+        <select name="days" id="drift-window" class="form-select d-inline-block w-auto" onchange="this.form.submit()">
+            {% for option in window_options %}
+                <option value="{{ option }}" {% if option == days %}selected{% endif %}>{{ option }}</option>
+            {% endfor %}
+        </select>
+    </form>
+
+    {% if not has_history %}
+        <div class="alert alert-info">
+            <strong>No snapshot history available.</strong>
+            Run the <a href="{% url 'extras:job_list' %}?q=Capture+coverage">Capture coverage snapshot</a> Job at least
+            twice (separated by at least one day) to populate this report.
+        </div>
+    {% elif baseline_actual == latest_actual %}
+        <div class="alert alert-info">
+            Only one snapshot date present in the database. Wait for the next scheduled snapshot — or run the
+            <a href="{% url 'extras:job_list' %}?q=Capture+coverage">Capture coverage snapshot</a> Job — and check back.
+        </div>
+    {% else %}
+        <p>
+            Comparing snapshot <strong>{{ baseline_actual|date:"SHORT_DATE_FORMAT" }}</strong>
+            ({{ baseline_count }} devices) against
+            <strong>{{ latest_actual|date:"SHORT_DATE_FORMAT" }}</strong>
+            ({{ latest_count }} devices).
+        </p>
+
+        <div class="card mt-3 border-danger">
+            <div class="card-header bg-danger text-white">
+                <strong>Lost coverage</strong>
+                <span class="badge bg-light text-danger">{{ rows_lost|length }}</span>
+            </div>
+            {% if rows_lost %}
+                <table class="table mb-0">
+                    <thead>
+                        <tr>
+                            <th>Device</th>
+                            <th>Location</th>
+                            <th>Tenant</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for row in rows_lost %}
+                            <tr>
+                                <td><a href="{{ row.device.get_absolute_url }}">{{ row.device.name }}</a></td>
+                                <td>{% if row.device.location %}{{ row.device.location.name }}{% else %}—{% endif %}</td>
+                                <td>{% if row.device.tenant %}{{ row.device.tenant.name }}{% else %}—{% endif %}</td>
+                            </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            {% else %}
+                <div class="card-body text-secondary">
+                    No devices lost coverage in this window. <span aria-hidden="true">✓</span>
+                </div>
+            {% endif %}
+        </div>
+
+        <div class="card mt-3 border-success">
+            <div class="card-header bg-success text-white">
+                <strong>Newly covered</strong>
+                <span class="badge bg-light text-success">{{ rows_newly_covered|length }}</span>
+            </div>
+            {% if rows_newly_covered %}
+                <table class="table mb-0">
+                    <thead>
+                        <tr>
+                            <th>Device</th>
+                            <th>Location</th>
+                            <th>Tenant</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for row in rows_newly_covered %}
+                            <tr>
+                                <td><a href="{{ row.device.get_absolute_url }}">{{ row.device.name }}</a></td>
+                                <td>{% if row.device.location %}{{ row.device.location.name }}{% else %}—{% endif %}</td>
+                                <td>{% if row.device.tenant %}{{ row.device.tenant.name }}{% else %}—{% endif %}</td>
+                            </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            {% else %}
+                <div class="card-body text-secondary">
+                    No devices gained coverage in this window.
+                </div>
+            {% endif %}
+        </div>
+    {% endif %}
+</div>
+{% endblock %}

@@ -752,6 +752,79 @@ class MigrateContractLCMToContract(Job):
 # --- end Phase 19 ------------------------------------------------------------
 
 
+# --- Phase 20: CoverageSnapshotJob -------------------------------------------
+#
+# Persist a per-device snapshot of coverage state. Feeds the Coverage Drift
+# view which diffs two snapshots N days apart to identify devices that
+# *lost* coverage (or gained it). Mirrors CostHistoryJob's pattern but
+# stores per-device rows, not per-currency aggregates.
+
+
+class CoverageSnapshotJob(Job):
+    """Snapshot every Device's coverage state into a CoverageSnapshot row.
+
+    Operators schedule this weekly. Each run records one row per device
+    capturing whether the device had active contract coverage (direct or
+    transitive) on today's date. Idempotent via UniqueConstraint on
+    (snapshot_date, device) + update_or_create — re-running the same day
+    refreshes the row rather than failing.
+
+    Coverage Drift view (``/plugins/contracts/reports/coverage-drift/``)
+    diffs two snapshot dates N days apart to surface devices that
+    *gained* or *lost* coverage.
+    """
+
+    class Meta:
+        """Job metadata."""
+
+        name = "Capture coverage snapshot"
+        description = "Persist a per-device CoverageSnapshot row for today's coverage state. Feeds the drift report."
+        grouping = NAME
+        has_sensitive_variables = False
+
+    def run(self):
+        """Walk Device.objects.all() and write one CoverageSnapshot per device."""
+        from nautobot_contract_models.helpers import has_active_coverage
+        from nautobot_contract_models.models import CoverageSnapshot
+
+        today = date.today()
+        # select_related the ancestors has_active_coverage walks so we
+        # don't N+1 on tenant/location/rack lookups per device.
+        devices = Device.objects.select_related("location", "tenant", "rack").iterator()
+
+        covered_count = 0
+        uncovered_count = 0
+        for device in devices:
+            covered = has_active_coverage(device, on_date=today)
+            CoverageSnapshot.objects.update_or_create(
+                snapshot_date=today,
+                device=device,
+                defaults={"was_covered": covered},
+            )
+            if covered:
+                covered_count += 1
+            else:
+                uncovered_count += 1
+
+        total = covered_count + uncovered_count
+        self.logger.info(
+            "Coverage snapshot for %s: %d devices total — %d covered, %d uncovered.",
+            today,
+            total,
+            covered_count,
+            uncovered_count,
+        )
+        return {
+            "snapshot_date": today.isoformat(),
+            "devices_total": total,
+            "devices_covered": covered_count,
+            "devices_uncovered": uncovered_count,
+        }
+
+
+# --- end Phase 20 ------------------------------------------------------------
+
+
 register_jobs(
     RenewalCheckJob,
     CoverageGapJob,
@@ -759,4 +832,5 @@ register_jobs(
     CostHistoryJob,
     CostAnomalyJob,
     MigrateContractLCMToContract,
+    CoverageSnapshotJob,
 )

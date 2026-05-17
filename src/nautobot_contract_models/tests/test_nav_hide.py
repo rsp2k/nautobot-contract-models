@@ -34,6 +34,17 @@ class _NavRegistrySnapshotMixin:
         from nautobot.core.apps import registry
 
         self._registry = registry
+
+        # If the dev environment has `hide_dlm_contracts_nav=True` set, our
+        # production `request_started` handler may have already fired earlier
+        # in this test-process and pop'd DLM's `Contracts` group from the
+        # registry. The hide-tests below need a known "Contracts present"
+        # baseline. Synthesize a placeholder so the snapshot always has it.
+        # Test-only side effect; restored to whatever it was before in tearDown.
+        dlm_tab = registry.get("nav_menu", {}).get("tabs", {}).get("Device Lifecycle")
+        if dlm_tab is not None:
+            dlm_tab.setdefault("groups", {}).setdefault("Contracts", {"_synthetic_for_test": True})
+
         self._nav_snapshot = copy.deepcopy(registry.get("nav_menu", {}))
 
     def tearDown(self):

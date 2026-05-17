@@ -486,6 +486,47 @@ Out of scope, deferred:
 
 Released as `2026.5.12`.
 
+### Phase 20 — Tier A operator convenience features (~session) — DONE
+
+Four operator-recommended features from a Tier A list (high-value, low-effort,
+reuses existing patterns). All four ship as additive surfaces — no model
+breakage, no operator action required to opt out (just don't enable the Job
+or visit the URL).
+
+- ✅ **iCal export** at `/plugins/contracts/contracts.ics`. Hand-rolled RFC
+  5545 body (no new deps). Auth: Django session OR per-user URL-param token
+  via new `ICalAccessToken` model. Token management UI at
+  `/plugins/contracts/ical-token/` with regenerate button and
+  copy-to-clipboard widget. Date-only `VEVENT` so timezones don't matter.
+- ✅ **Device-detail "Active Contracts" panel** via `DeviceActiveContracts(TemplateExtension)`
+  in `template_content.py`. Transitive coverage — same `coverage_assignments`
+  helper used by `has_active_coverage`. "Source" column shows `direct` or
+  `via Tenant: ACME Corp` / etc.
+- ✅ **Vendor Concentration Risk** home dashboard panel at weight 1525.
+  Per-currency top-vendor share with configurable threshold flag
+  (`vendor_concentration_threshold_pct`, default 50). New `cost.vendor_concentration()`
+  composes existing `burn_rate_by_currency` + `spend_by_vendor` (no new queries).
+- ✅ **Coverage Drift report** at `/plugins/contracts/reports/coverage-drift/`.
+  New `CoverageSnapshot(BaseModel)` model — one row per (date, device).
+  `CoverageSnapshotJob` writes weekly. Drift view diffs the latest set
+  against the most recent snapshot on-or-before the configured baseline,
+  surfacing lost-coverage and newly-covered devices.
+- ✅ 36 new tests (134 total). Each feature has its own test module.
+
+Test-environment fixes shipped with this release (uncovered as part of
+Phase 20's first HTTP-based tests):
+- `nautobot.example.com` added to ALLOWED_HOSTS in dev `nautobot_config.py`
+  so `NautobotTestClient` (defaults `SERVER_NAME=nautobot.example.com`)
+  doesn't get 400-rejected.
+- `NAUTOBOT_DB_HOST` in dev `docker-compose.yml` switched to the
+  fully-qualified `nautobot-contract-models-postgres` to avoid cross-stack
+  DNS collision on the shared `caddy` network.
+
+Migration `0010_icalaccesstoken_coveragesnapshot`. Schema add only, no data
+migration.
+
+Released as `2026.5.17`.
+
 ## Tech-stack decisions (final, don't relitigate)
 
 | Concern | Choice | Rationale |

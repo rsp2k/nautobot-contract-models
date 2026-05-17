@@ -13,6 +13,8 @@ Inspired by [netbox-contract](https://github.com/mlebreuil/netbox-contract), but
 
 Tested against **Nautobot 3.1.1**. CalVer versioning (`YYYY.M.D`) — see `pyproject.toml` for the version that was current when you cloned.
 
+**Latest**: v2026.5.17 — adds [iCal calendar export](https://nautobot-contract-models.readthedocs.io/en/latest/admin/release_notes/version_2026.5.17/), a Device-detail Active Contracts panel, a Vendor Concentration Risk dashboard panel, and a Coverage Drift report.
+
 ## Coexistence with `nautobot-app-device-lifecycle` (DLM)
 
 Both plugins ship a "Contracts" surface; DLM's `ContractLCM` is structurally simpler than our `Contract`. Since **v2026.5.11** the two plugins coexist without colliding on Django's `Status` reverse accessor. **v2026.5.12** adds two opt-in features so operators can make our `Contract` *the* canonical contracts surface:
@@ -84,6 +86,7 @@ The renewal-check Job ships **disabled** (Nautobot 3.x default for newly-discove
 |---|---|---|---|
 | `renewal_window_days` | int | `60` | Window in days for the renewal-alert Job's default + the homepage "Upcoming Renewals" panel |
 | `hide_dlm_contracts_nav` | bool | `False` | When `True` AND `nautobot-app-device-lifecycle-mgmt` is installed, removes DLM's `Contracts` sidebar group. DLM's URLs, REST API, and other nav groups (Hardware Notices, Software Lifecycle, Reports) are untouched. See the [Coexistence section above](#coexistence-with-nautobot-app-device-lifecycle-dlm) for full context. |
+| `vendor_concentration_threshold_pct` | int | `50` | Top-vendor percentage that trips the concentration-risk flag on the home dashboard's Vendor Concentration panel. Range 0–100. (Added in v2026.5.17.) |
 
 ## REST API
 

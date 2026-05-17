@@ -63,11 +63,14 @@ class NautobotContractModelsConfig(NautobotAppConfig):
         # AppConfig.ready() removes DLM's "Contracts" nav group at startup.
         # See `_maybe_hide_dlm_contracts_nav` above for the rationale.
         "hide_dlm_contracts_nav": False,
+        # Phase 20: top-vendor percentage that trips the "concentration risk"
+        # flag on the home dashboard's Vendor Concentration panel. 0-100.
+        "vendor_concentration_threshold_pct": 50,
     }
     caching_config: dict = {}
 
     def ready(self):
-        """Wire the lazy DLM-nav-hide hook on ``request_started`` so it fires after every plugin's ready().
+        """Connect a lazy DLM nav-hide handler to the request_started signal.
 
         We can't call ``_maybe_hide_dlm_contracts_nav`` directly from ready()
         because plugins load in INSTALLED_APPS order — if our app comes before

@@ -9,9 +9,11 @@ Public model surface:
   Nautobot object (Device, Circuit, VirtualMachine, …)
 """
 
+from .access_token import ICalAccessToken
 from .assignment import ContractAssignment
 from .attachment import ContractAttachment, InvoiceAttachment
 from .contract import Contract
+from .coverage_snapshot import CoverageSnapshot
 from .invoice import Invoice
 from .provider import ServiceProvider
 from .snapshot import CostSnapshot
@@ -21,6 +23,8 @@ __all__ = [
     "ContractAssignment",
     "ContractAttachment",
     "CostSnapshot",
+    "CoverageSnapshot",
+    "ICalAccessToken",
     "Invoice",
     "InvoiceAttachment",
     "ServiceProvider",

@@ -1,0 +1,49 @@
+{% comment %}
+Vendor Concentration home dashboard panel — Phase 20.
+
+Per-currency top-vendor share, with a threshold flag for currencies where
+a single vendor exceeds the configured concentration percentage (default
+50%, configurable via PLUGINS_CONFIG.vendor_concentration_threshold_pct).
+
+Context variables (from homepage.py get_vendor_concentration):
+- vendor_concentration.rows: list of {currency, top_vendor, top_vendor_pct, total_burn, flagged}
+- vendor_concentration.threshold_pct_label: "50%" or similar
+
+Why amber (not red) for flagged rows:
+    Concentration risk is a *signal*, not a *fire*. Amber matches the
+    semantic weight of "you should think about this" without the
+    alarm-bell connotation red carries.
+{% endcomment %}
+{% load helpers %}
+{% if vendor_concentration.rows and perms.nautobot_contract_models.view_contract %}
+    {% for row in vendor_concentration.rows %}
+        <div class="list-group-item">
+            <span>
+                <a href="{{ row.top_vendor.get_absolute_url }}">{{ row.top_vendor.name }}</a>
+                {% if row.flagged %}
+                    <span class="badge bg-warning text-dark" title="Top vendor exceeds {{ vendor_concentration.threshold_pct_label }} concentration threshold">
+                        <span class="mdi mdi-alert-outline" aria-hidden="true"></span>
+                        risk
+                    </span>
+                {% endif %}
+            </span>
+            <span class="float-end">
+                <strong>{{ row.top_vendor_pct_label }}</strong>
+                of {{ row.currency }} burn
+            </span>
+            <br>
+            <small class="text-secondary">
+                Top vendor in {{ row.currency }} &middot;
+                {{ row.total_burn }} {{ row.currency }}/mo total
+            </small>
+        </div>
+    {% endfor %}
+{% elif perms.nautobot_contract_models.view_contract %}
+    <div class="card-body text-secondary">
+        No active contracts to evaluate.
+    </div>
+{% else %}
+    <div class="card-body text-secondary">
+        <span class="mdi mdi-lock" aria-hidden="true"></span> No permission
+    </div>
+{% endif %}

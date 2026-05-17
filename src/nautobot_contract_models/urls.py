@@ -16,8 +16,11 @@ from nautobot_contract_models.views import (
     ContractAssignmentUIViewSet,
     ContractAttachmentUIViewSet,
     ContractCostHistoryView,
+    ContractCoverageDriftView,
+    ContractICalExportView,
     ContractRenewalCalendarView,
     ContractUIViewSet,
+    ICalTokenManageView,
     InvoiceAttachmentUIViewSet,
     InvoiceUIViewSet,
     ServiceProviderUIViewSet,
@@ -54,5 +57,24 @@ urlpatterns = [
         "reports/cost-history/",
         ContractCostHistoryView.as_view(),
         name="contract_cost_history",
+    ),
+    # --- Phase 20 routes ----------------------------------------------------
+    path(
+        "reports/coverage-drift/",
+        ContractCoverageDriftView.as_view(),
+        name="contract_coverage_drift",
+    ),
+    # iCal export uses ``.ics`` rather than a directory path so calendar apps
+    # that infer MIME from extension recognize it without the operator having
+    # to muck with content-type sniffing.
+    path(
+        "contracts.ics",
+        ContractICalExportView.as_view(),
+        name="contract_ical_export",
+    ),
+    path(
+        "ical-token/",
+        ICalTokenManageView.as_view(),
+        name="ical_token_manage",
     ),
 ] + router.urls

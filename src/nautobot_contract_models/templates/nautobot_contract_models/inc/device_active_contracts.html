@@ -1,0 +1,55 @@
+{% comment %}
+Device-detail Active Contracts panel — Phase 20.
+
+Renders in the right_page slot of every Device detail page. Shows
+contracts covering this device via either direct ContractAssignment or
+ancestry (Tenant, Location, Rack, parent device). The "Source" column
+makes the difference visible — operators can tell at a glance whether
+a contract is direct on the device or inherited.
+
+Context variables (from template_content.py DeviceActiveContracts):
+- rows: list of {assignment, contract, source_label}
+- device: the Device being rendered
+
+Why a hand-rolled card rather than panel_table.html include:
+    The "Source" column needs custom rendering (a label string built in
+    Python). A hand-written card stays compact and styles the source as
+    a secondary-color caption next to the contract name.
+{% endcomment %}
+{% if perms.nautobot_contract_models.view_contract %}
+<div class="card mb-3">
+    <div class="card-header">
+        <strong>Active Contracts</strong>
+        {% if rows %}
+            <span class="badge bg-secondary float-end">{{ rows|length }}</span>
+        {% endif %}
+    </div>
+    {% if rows %}
+        <ul class="list-group list-group-flush">
+            {% for row in rows %}
+                <li class="list-group-item">
+                    <a href="{{ row.contract.get_absolute_url }}">{{ row.contract.name }}</a>
+                    <span class="float-end text-secondary">
+                        {{ row.contract.end_date|date:"SHORT_DATE_FORMAT" }}
+                    </span>
+                    <br>
+                    <small class="text-secondary">
+                        {% if row.contract.provider %}{{ row.contract.provider.name }}{% else %}—{% endif %}
+                        {% if row.contract.recurring_cost %}
+                            &middot; {{ row.contract.recurring_cost }} {{ row.contract.currency }}
+                        {% endif %}
+                        &middot; <em>{{ row.source_label }}</em>
+                    </small>
+                </li>
+            {% endfor %}
+        </ul>
+        <div class="card-footer text-end">
+            <a href="{% url 'plugins:nautobot_contract_models:contract_list' %}">View all contracts</a>
+        </div>
+    {% else %}
+        <div class="card-body text-secondary">
+            No active contracts covering this device.
+        </div>
+    {% endif %}
+</div>
+{% endif %}

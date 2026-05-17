@@ -1398,6 +1398,8 @@
       
         
       
+        
+      
     
     
     
@@ -1448,6 +1450,34 @@
           </label>
           <ul class="md-nav__list" data-md-scrollfix>
             
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="admin/release_notes/version_2026.5.17/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    v2026.5.17
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
               
             
               
@@ -2297,6 +2327,7 @@
 <p>Inspired by <a href="https://github.com/mlebreuil/netbox-contract">netbox-contract</a>, but re-architected for Nautobot 3.x conventions: <code>PrimaryModel</code>, the Status framework, <code>Tenant</code>, ChangeLog, the Job framework, and the modern <code>NautobotUIViewSet</code> / <code>ObjectDetailContent</code> UI Component Framework.</p>
 <h2 id="status">Status<a class="headerlink" href="#status" title="Permanent link">&para;</a></h2>
 <p>Tested against <strong>Nautobot 3.1.1</strong>. CalVer versioning (<code>YYYY.M.D</code>) — see <code>pyproject.toml</code> for the version that was current when you cloned.</p>
+<p><strong>Latest</strong>: v2026.5.17 — adds <a href="https://nautobot-contract-models.readthedocs.io/en/latest/admin/release_notes/version_2026.5.17/">iCal calendar export</a>, a Device-detail Active Contracts panel, a Vendor Concentration Risk dashboard panel, and a Coverage Drift report.</p>
 <h2 id="coexistence-with-nautobot-app-device-lifecycle-dlm">Coexistence with <code>nautobot-app-device-lifecycle</code> (DLM)<a class="headerlink" href="#coexistence-with-nautobot-app-device-lifecycle-dlm" title="Permanent link">&para;</a></h2>
 <p>Both plugins ship a "Contracts" surface; DLM's <code>ContractLCM</code> is structurally simpler than our <code>Contract</code>. Since <strong>v2026.5.11</strong> the two plugins coexist without colliding on Django's <code>Status</code> reverse accessor. <strong>v2026.5.12</strong> adds two opt-in features so operators can make our <code>Contract</code> <em>the</em> canonical contracts surface:</p>
 <ul>
@@ -2398,6 +2429,12 @@
 <td>bool</td>
 <td><code>False</code></td>
 <td>When <code>True</code> AND <code>nautobot-app-device-lifecycle-mgmt</code> is installed, removes DLM's <code>Contracts</code> sidebar group. DLM's URLs, REST API, and other nav groups (Hardware Notices, Software Lifecycle, Reports) are untouched. See the <a href="#coexistence-with-nautobot-app-device-lifecycle-dlm">Coexistence section above</a> for full context.</td>
+</tr>
+<tr>
+<td><code>vendor_concentration_threshold_pct</code></td>
+<td>int</td>
+<td><code>50</code></td>
+<td>Top-vendor percentage that trips the concentration-risk flag on the home dashboard's Vendor Concentration panel. Range 0–100. (Added in v2026.5.17.)</td>
 </tr>
 </tbody>
 </table>

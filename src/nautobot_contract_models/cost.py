@@ -149,6 +149,55 @@ def spend_by_vendor(*, on_date=None, limit=10):
     return rows
 
 
+def vendor_concentration(*, on_date=None):
+    """Per-currency top-vendor share — procurement concentration signal.
+
+    Returns ``dict[currency_code, dict]`` where each currency maps to::
+
+        {
+            "top_vendor": <ServiceProvider>,
+            "top_vendor_pct": Decimal("0.65"),   # fraction, not percent
+            "total_burn":  Decimal("3200.00"),   # this currency's monthly burn
+        }
+
+    Composes :func:`burn_rate_by_currency` and :func:`spend_by_vendor` so
+    we don't reissue the queryset. Currencies with zero burn don't appear
+    in the result (no top vendor to identify).
+
+    Per-currency by design: a vendor concentrated in USD is genuinely
+    risky even when EUR spend is diversified. Mixing across currencies
+    would hide that asymmetry — the same reason ``burn_rate_by_currency``
+    doesn't sum across FX.
+    """
+    if on_date is None:
+        on_date = date.today()
+
+    burn = burn_rate_by_currency(on_date=on_date)
+    if not burn:
+        return {}
+
+    # spend_by_vendor returns (provider, total, currency) tuples already sorted desc.
+    # Walk it once, take the first entry per currency.
+    per_currency_top = {}
+    for provider, total, currency in spend_by_vendor(on_date=on_date, limit=None):
+        if currency not in per_currency_top:
+            per_currency_top[currency] = (provider, total)
+
+    result = {}
+    for currency, currency_burn in burn.items():
+        if currency_burn <= ZERO:
+            continue
+        if currency not in per_currency_top:
+            continue
+        provider, vendor_total = per_currency_top[currency]
+        result[currency] = {
+            "top_vendor": provider,
+            "top_vendor_pct": vendor_total / currency_burn,
+            "total_burn": currency_burn,
+        }
+    return result
+
+
 def renewal_calendar(months=12, *, on_date=None):
     """Forward-looking month-by-month renewal cost grid.
 

@@ -1113,6 +1113,8 @@
       
         
       
+        
+      
     
     
     
@@ -1163,6 +1165,34 @@
           </label>
           <ul class="md-nav__list" data-md-scrollfix="">
             
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../admin/release_notes/version_2026.5.17/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    v2026.5.17
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
               
             
               
@@ -1867,6 +1897,45 @@
 </li>
         
           <li class="md-nav__item">
+  <a href="#nautobot_contract_models.jobs.CoverageSnapshotJob" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        CoverageSnapshotJob
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="CoverageSnapshotJob">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#nautobot_contract_models.jobs.CoverageSnapshotJob.Meta" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Meta
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#nautobot_contract_models.jobs.CoverageSnapshotJob.run" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        run
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+        
+          <li class="md-nav__item">
   <a href="#nautobot_contract_models.jobs.MigrateContractLCMToContract" class="md-nav__link">
     <span class="md-ellipsis">
       
@@ -2180,6 +2249,45 @@
         
           <li class="md-nav__item">
   <a href="#nautobot_contract_models.jobs.CoverageGapJob.run" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        run
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#nautobot_contract_models.jobs.CoverageSnapshotJob" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        CoverageSnapshotJob
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="CoverageSnapshotJob">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#nautobot_contract_models.jobs.CoverageSnapshotJob.Meta" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Meta
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#nautobot_contract_models.jobs.CoverageSnapshotJob.run" class="md-nav__link">
     <span class="md-ellipsis">
       
         run
@@ -3623,6 +3731,345 @@ JobLogEntry webhook can route the list into Slack / email / a ticket.</p>
 <a id="__codelineno-0-204" name="__codelineno-0-204"></a>        <span class="n">scanned</span><span class="p">,</span>
 <a id="__codelineno-0-205" name="__codelineno-0-205"></a>    <span class="p">)</span>
 <a id="__codelineno-0-206" name="__codelineno-0-206"></a>    <span class="k">return</span> <span class="n">uncovered</span>
+</code></pre></div></td></tr></tbody></table></div>
+            </details>
+    </div>
+
+</div>
+
+
+
+  </div>
+
+    </div>
+
+</div>
+
+<div class="doc doc-object doc-class">
+
+
+
+<h3 id="nautobot_contract_models.jobs.CoverageSnapshotJob" class="doc doc-heading">
+            <code>CoverageSnapshotJob</code>
+
+
+<a href="#nautobot_contract_models.jobs.CoverageSnapshotJob" class="headerlink" title="Permanent link">¶</a></h3>
+
+
+    <div class="doc doc-contents ">
+            <p class="doc doc-class-bases">
+              Bases: <code><span title="nautobot.apps.jobs.Job">Job</span></code></p>
+
+
+
+        <p>Snapshot every Device's coverage state into a CoverageSnapshot row.</p>
+<p>Operators schedule this weekly. Each run records one row per device
+capturing whether the device had active contract coverage (direct or
+transitive) on today's date. Idempotent via UniqueConstraint on
+(snapshot_date, device) + update_or_create — re-running the same day
+refreshes the row rather than failing.</p>
+<p>Coverage Drift view (<code>/plugins/contracts/reports/coverage-drift/</code>)
+diffs two snapshot dates N days apart to surface devices that
+<em>gained</em> or <em>lost</em> coverage.</p>
+
+
+
+
+
+
+
+
+              <details class="mkdocstrings-source">
+                <summary>Source code in <code>src/nautobot_contract_models/jobs.py</code></summary>
+                <div class="highlight"><table class="highlighttable"><tbody><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal"><a href="#__codelineno-0-763">763</a></span>
+<span class="normal"><a href="#__codelineno-0-764">764</a></span>
+<span class="normal"><a href="#__codelineno-0-765">765</a></span>
+<span class="normal"><a href="#__codelineno-0-766">766</a></span>
+<span class="normal"><a href="#__codelineno-0-767">767</a></span>
+<span class="normal"><a href="#__codelineno-0-768">768</a></span>
+<span class="normal"><a href="#__codelineno-0-769">769</a></span>
+<span class="normal"><a href="#__codelineno-0-770">770</a></span>
+<span class="normal"><a href="#__codelineno-0-771">771</a></span>
+<span class="normal"><a href="#__codelineno-0-772">772</a></span>
+<span class="normal"><a href="#__codelineno-0-773">773</a></span>
+<span class="normal"><a href="#__codelineno-0-774">774</a></span>
+<span class="normal"><a href="#__codelineno-0-775">775</a></span>
+<span class="normal"><a href="#__codelineno-0-776">776</a></span>
+<span class="normal"><a href="#__codelineno-0-777">777</a></span>
+<span class="normal"><a href="#__codelineno-0-778">778</a></span>
+<span class="normal"><a href="#__codelineno-0-779">779</a></span>
+<span class="normal"><a href="#__codelineno-0-780">780</a></span>
+<span class="normal"><a href="#__codelineno-0-781">781</a></span>
+<span class="normal"><a href="#__codelineno-0-782">782</a></span>
+<span class="normal"><a href="#__codelineno-0-783">783</a></span>
+<span class="normal"><a href="#__codelineno-0-784">784</a></span>
+<span class="normal"><a href="#__codelineno-0-785">785</a></span>
+<span class="normal"><a href="#__codelineno-0-786">786</a></span>
+<span class="normal"><a href="#__codelineno-0-787">787</a></span>
+<span class="normal"><a href="#__codelineno-0-788">788</a></span>
+<span class="normal"><a href="#__codelineno-0-789">789</a></span>
+<span class="normal"><a href="#__codelineno-0-790">790</a></span>
+<span class="normal"><a href="#__codelineno-0-791">791</a></span>
+<span class="normal"><a href="#__codelineno-0-792">792</a></span>
+<span class="normal"><a href="#__codelineno-0-793">793</a></span>
+<span class="normal"><a href="#__codelineno-0-794">794</a></span>
+<span class="normal"><a href="#__codelineno-0-795">795</a></span>
+<span class="normal"><a href="#__codelineno-0-796">796</a></span>
+<span class="normal"><a href="#__codelineno-0-797">797</a></span>
+<span class="normal"><a href="#__codelineno-0-798">798</a></span>
+<span class="normal"><a href="#__codelineno-0-799">799</a></span>
+<span class="normal"><a href="#__codelineno-0-800">800</a></span>
+<span class="normal"><a href="#__codelineno-0-801">801</a></span>
+<span class="normal"><a href="#__codelineno-0-802">802</a></span>
+<span class="normal"><a href="#__codelineno-0-803">803</a></span>
+<span class="normal"><a href="#__codelineno-0-804">804</a></span>
+<span class="normal"><a href="#__codelineno-0-805">805</a></span>
+<span class="normal"><a href="#__codelineno-0-806">806</a></span>
+<span class="normal"><a href="#__codelineno-0-807">807</a></span>
+<span class="normal"><a href="#__codelineno-0-808">808</a></span>
+<span class="normal"><a href="#__codelineno-0-809">809</a></span>
+<span class="normal"><a href="#__codelineno-0-810">810</a></span>
+<span class="normal"><a href="#__codelineno-0-811">811</a></span>
+<span class="normal"><a href="#__codelineno-0-812">812</a></span>
+<span class="normal"><a href="#__codelineno-0-813">813</a></span>
+<span class="normal"><a href="#__codelineno-0-814">814</a></span>
+<span class="normal"><a href="#__codelineno-0-815">815</a></span>
+<span class="normal"><a href="#__codelineno-0-816">816</a></span>
+<span class="normal"><a href="#__codelineno-0-817">817</a></span>
+<span class="normal"><a href="#__codelineno-0-818">818</a></span>
+<span class="normal"><a href="#__codelineno-0-819">819</a></span>
+<span class="normal"><a href="#__codelineno-0-820">820</a></span>
+<span class="normal"><a href="#__codelineno-0-821">821</a></span>
+<span class="normal"><a href="#__codelineno-0-822">822</a></span></pre></div></td><td class="code"><div><pre><span></span><code><a id="__codelineno-0-763" name="__codelineno-0-763"></a><span class="k">class</span><span class="w"> </span><span class="nc">CoverageSnapshotJob</span><span class="p">(</span><span class="n">Job</span><span class="p">):</span>
+<a id="__codelineno-0-764" name="__codelineno-0-764"></a><span class="w">    </span><span class="sd">"""Snapshot every Device's coverage state into a CoverageSnapshot row.</span>
+<a id="__codelineno-0-765" name="__codelineno-0-765"></a>
+<a id="__codelineno-0-766" name="__codelineno-0-766"></a><span class="sd">    Operators schedule this weekly. Each run records one row per device</span>
+<a id="__codelineno-0-767" name="__codelineno-0-767"></a><span class="sd">    capturing whether the device had active contract coverage (direct or</span>
+<a id="__codelineno-0-768" name="__codelineno-0-768"></a><span class="sd">    transitive) on today's date. Idempotent via UniqueConstraint on</span>
+<a id="__codelineno-0-769" name="__codelineno-0-769"></a><span class="sd">    (snapshot_date, device) + update_or_create — re-running the same day</span>
+<a id="__codelineno-0-770" name="__codelineno-0-770"></a><span class="sd">    refreshes the row rather than failing.</span>
+<a id="__codelineno-0-771" name="__codelineno-0-771"></a>
+<a id="__codelineno-0-772" name="__codelineno-0-772"></a><span class="sd">    Coverage Drift view (``/plugins/contracts/reports/coverage-drift/``)</span>
+<a id="__codelineno-0-773" name="__codelineno-0-773"></a><span class="sd">    diffs two snapshot dates N days apart to surface devices that</span>
+<a id="__codelineno-0-774" name="__codelineno-0-774"></a><span class="sd">    *gained* or *lost* coverage.</span>
+<a id="__codelineno-0-775" name="__codelineno-0-775"></a><span class="sd">    """</span>
+<a id="__codelineno-0-776" name="__codelineno-0-776"></a>
+<a id="__codelineno-0-777" name="__codelineno-0-777"></a>    <span class="k">class</span><span class="w"> </span><span class="nc">Meta</span><span class="p">:</span>
+<a id="__codelineno-0-778" name="__codelineno-0-778"></a><span class="w">        </span><span class="sd">"""Job metadata."""</span>
+<a id="__codelineno-0-779" name="__codelineno-0-779"></a>
+<a id="__codelineno-0-780" name="__codelineno-0-780"></a>        <span class="n">name</span> <span class="o">=</span> <span class="s2">"Capture coverage snapshot"</span>
+<a id="__codelineno-0-781" name="__codelineno-0-781"></a>        <span class="n">description</span> <span class="o">=</span> <span class="s2">"Persist a per-device CoverageSnapshot row for today's coverage state. Feeds the drift report."</span>
+<a id="__codelineno-0-782" name="__codelineno-0-782"></a>        <span class="n">grouping</span> <span class="o">=</span> <span class="n">NAME</span>
+<a id="__codelineno-0-783" name="__codelineno-0-783"></a>        <span class="n">has_sensitive_variables</span> <span class="o">=</span> <span class="kc">False</span>
+<a id="__codelineno-0-784" name="__codelineno-0-784"></a>
+<a id="__codelineno-0-785" name="__codelineno-0-785"></a>    <span class="k">def</span><span class="w"> </span><span class="nf">run</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+<a id="__codelineno-0-786" name="__codelineno-0-786"></a><span class="w">        </span><span class="sd">"""Walk Device.objects.all() and write one CoverageSnapshot per device."""</span>
+<a id="__codelineno-0-787" name="__codelineno-0-787"></a>        <span class="kn">from</span><span class="w"> </span><span class="nn">nautobot_contract_models.helpers</span><span class="w"> </span><span class="kn">import</span> <span class="n">has_active_coverage</span>
+<a id="__codelineno-0-788" name="__codelineno-0-788"></a>        <span class="kn">from</span><span class="w"> </span><span class="nn">nautobot_contract_models.models</span><span class="w"> </span><span class="kn">import</span> <span class="n">CoverageSnapshot</span>
+<a id="__codelineno-0-789" name="__codelineno-0-789"></a>
+<a id="__codelineno-0-790" name="__codelineno-0-790"></a>        <span class="n">today</span> <span class="o">=</span> <span class="n">date</span><span class="o">.</span><span class="n">today</span><span class="p">()</span>
+<a id="__codelineno-0-791" name="__codelineno-0-791"></a>        <span class="c1"># select_related the ancestors has_active_coverage walks so we</span>
+<a id="__codelineno-0-792" name="__codelineno-0-792"></a>        <span class="c1"># don't N+1 on tenant/location/rack lookups per device.</span>
+<a id="__codelineno-0-793" name="__codelineno-0-793"></a>        <span class="n">devices</span> <span class="o">=</span> <span class="n">Device</span><span class="o">.</span><span class="n">objects</span><span class="o">.</span><span class="n">select_related</span><span class="p">(</span><span class="s2">"location"</span><span class="p">,</span> <span class="s2">"tenant"</span><span class="p">,</span> <span class="s2">"rack"</span><span class="p">)</span><span class="o">.</span><span class="n">iterator</span><span class="p">()</span>
+<a id="__codelineno-0-794" name="__codelineno-0-794"></a>
+<a id="__codelineno-0-795" name="__codelineno-0-795"></a>        <span class="n">covered_count</span> <span class="o">=</span> <span class="mi">0</span>
+<a id="__codelineno-0-796" name="__codelineno-0-796"></a>        <span class="n">uncovered_count</span> <span class="o">=</span> <span class="mi">0</span>
+<a id="__codelineno-0-797" name="__codelineno-0-797"></a>        <span class="k">for</span> <span class="n">device</span> <span class="ow">in</span> <span class="n">devices</span><span class="p">:</span>
+<a id="__codelineno-0-798" name="__codelineno-0-798"></a>            <span class="n">covered</span> <span class="o">=</span> <span class="n">has_active_coverage</span><span class="p">(</span><span class="n">device</span><span class="p">,</span> <span class="n">on_date</span><span class="o">=</span><span class="n">today</span><span class="p">)</span>
+<a id="__codelineno-0-799" name="__codelineno-0-799"></a>            <span class="n">CoverageSnapshot</span><span class="o">.</span><span class="n">objects</span><span class="o">.</span><span class="n">update_or_create</span><span class="p">(</span>
+<a id="__codelineno-0-800" name="__codelineno-0-800"></a>                <span class="n">snapshot_date</span><span class="o">=</span><span class="n">today</span><span class="p">,</span>
+<a id="__codelineno-0-801" name="__codelineno-0-801"></a>                <span class="n">device</span><span class="o">=</span><span class="n">device</span><span class="p">,</span>
+<a id="__codelineno-0-802" name="__codelineno-0-802"></a>                <span class="n">defaults</span><span class="o">=</span><span class="p">{</span><span class="s2">"was_covered"</span><span class="p">:</span> <span class="n">covered</span><span class="p">},</span>
+<a id="__codelineno-0-803" name="__codelineno-0-803"></a>            <span class="p">)</span>
+<a id="__codelineno-0-804" name="__codelineno-0-804"></a>            <span class="k">if</span> <span class="n">covered</span><span class="p">:</span>
+<a id="__codelineno-0-805" name="__codelineno-0-805"></a>                <span class="n">covered_count</span> <span class="o">+=</span> <span class="mi">1</span>
+<a id="__codelineno-0-806" name="__codelineno-0-806"></a>            <span class="k">else</span><span class="p">:</span>
+<a id="__codelineno-0-807" name="__codelineno-0-807"></a>                <span class="n">uncovered_count</span> <span class="o">+=</span> <span class="mi">1</span>
+<a id="__codelineno-0-808" name="__codelineno-0-808"></a>
+<a id="__codelineno-0-809" name="__codelineno-0-809"></a>        <span class="n">total</span> <span class="o">=</span> <span class="n">covered_count</span> <span class="o">+</span> <span class="n">uncovered_count</span>
+<a id="__codelineno-0-810" name="__codelineno-0-810"></a>        <span class="bp">self</span><span class="o">.</span><span class="n">logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span>
+<a id="__codelineno-0-811" name="__codelineno-0-811"></a>            <span class="s2">"Coverage snapshot for </span><span class="si">%s</span><span class="s2">: </span><span class="si">%d</span><span class="s2"> devices total — </span><span class="si">%d</span><span class="s2"> covered, </span><span class="si">%d</span><span class="s2"> uncovered."</span><span class="p">,</span>
+<a id="__codelineno-0-812" name="__codelineno-0-812"></a>            <span class="n">today</span><span class="p">,</span>
+<a id="__codelineno-0-813" name="__codelineno-0-813"></a>            <span class="n">total</span><span class="p">,</span>
+<a id="__codelineno-0-814" name="__codelineno-0-814"></a>            <span class="n">covered_count</span><span class="p">,</span>
+<a id="__codelineno-0-815" name="__codelineno-0-815"></a>            <span class="n">uncovered_count</span><span class="p">,</span>
+<a id="__codelineno-0-816" name="__codelineno-0-816"></a>        <span class="p">)</span>
+<a id="__codelineno-0-817" name="__codelineno-0-817"></a>        <span class="k">return</span> <span class="p">{</span>
+<a id="__codelineno-0-818" name="__codelineno-0-818"></a>            <span class="s2">"snapshot_date"</span><span class="p">:</span> <span class="n">today</span><span class="o">.</span><span class="n">isoformat</span><span class="p">(),</span>
+<a id="__codelineno-0-819" name="__codelineno-0-819"></a>            <span class="s2">"devices_total"</span><span class="p">:</span> <span class="n">total</span><span class="p">,</span>
+<a id="__codelineno-0-820" name="__codelineno-0-820"></a>            <span class="s2">"devices_covered"</span><span class="p">:</span> <span class="n">covered_count</span><span class="p">,</span>
+<a id="__codelineno-0-821" name="__codelineno-0-821"></a>            <span class="s2">"devices_uncovered"</span><span class="p">:</span> <span class="n">uncovered_count</span><span class="p">,</span>
+<a id="__codelineno-0-822" name="__codelineno-0-822"></a>        <span class="p">}</span>
+</code></pre></div></td></tr></tbody></table></div>
+              </details>
+
+
+
+<div class="doc doc-children">
+
+
+
+
+
+
+
+
+
+<div class="doc doc-object doc-class">
+
+
+
+<h4 id="nautobot_contract_models.jobs.CoverageSnapshotJob.Meta" class="doc doc-heading">
+            <code>Meta</code>
+
+
+<a href="#nautobot_contract_models.jobs.CoverageSnapshotJob.Meta" class="headerlink" title="Permanent link">¶</a></h4>
+
+
+    <div class="doc doc-contents ">
+
+
+
+        <p>Job metadata.</p>
+
+
+
+
+
+
+
+
+              <details class="mkdocstrings-source">
+                <summary>Source code in <code>src/nautobot_contract_models/jobs.py</code></summary>
+                <div class="highlight"><table class="highlighttable"><tbody><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal"><a href="#__codelineno-0-777">777</a></span>
+<span class="normal"><a href="#__codelineno-0-778">778</a></span>
+<span class="normal"><a href="#__codelineno-0-779">779</a></span>
+<span class="normal"><a href="#__codelineno-0-780">780</a></span>
+<span class="normal"><a href="#__codelineno-0-781">781</a></span>
+<span class="normal"><a href="#__codelineno-0-782">782</a></span>
+<span class="normal"><a href="#__codelineno-0-783">783</a></span></pre></div></td><td class="code"><div><pre><span></span><code><a id="__codelineno-0-777" name="__codelineno-0-777"></a><span class="k">class</span><span class="w"> </span><span class="nc">Meta</span><span class="p">:</span>
+<a id="__codelineno-0-778" name="__codelineno-0-778"></a><span class="w">    </span><span class="sd">"""Job metadata."""</span>
+<a id="__codelineno-0-779" name="__codelineno-0-779"></a>
+<a id="__codelineno-0-780" name="__codelineno-0-780"></a>    <span class="n">name</span> <span class="o">=</span> <span class="s2">"Capture coverage snapshot"</span>
+<a id="__codelineno-0-781" name="__codelineno-0-781"></a>    <span class="n">description</span> <span class="o">=</span> <span class="s2">"Persist a per-device CoverageSnapshot row for today's coverage state. Feeds the drift report."</span>
+<a id="__codelineno-0-782" name="__codelineno-0-782"></a>    <span class="n">grouping</span> <span class="o">=</span> <span class="n">NAME</span>
+<a id="__codelineno-0-783" name="__codelineno-0-783"></a>    <span class="n">has_sensitive_variables</span> <span class="o">=</span> <span class="kc">False</span>
+</code></pre></div></td></tr></tbody></table></div>
+              </details>
+
+
+
+<div class="doc doc-children">
+
+
+
+
+
+
+
+
+
+
+
+
+  </div>
+
+    </div>
+
+</div>
+
+
+<div class="doc doc-object doc-function">
+
+
+<h4 id="nautobot_contract_models.jobs.CoverageSnapshotJob.run" class="doc doc-heading">
+            <code class="highlight language-python"><span class="n">run</span><span class="p">()</span></code>
+
+<a href="#nautobot_contract_models.jobs.CoverageSnapshotJob.run" class="headerlink" title="Permanent link">¶</a></h4>
+
+
+    <div class="doc doc-contents ">
+
+        <p>Walk Device.objects.all() and write one CoverageSnapshot per device.</p>
+
+
+            <details class="mkdocstrings-source">
+              <summary>Source code in <code>src/nautobot_contract_models/jobs.py</code></summary>
+              <div class="highlight"><table class="highlighttable"><tbody><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal"><a href="#__codelineno-0-785">785</a></span>
+<span class="normal"><a href="#__codelineno-0-786">786</a></span>
+<span class="normal"><a href="#__codelineno-0-787">787</a></span>
+<span class="normal"><a href="#__codelineno-0-788">788</a></span>
+<span class="normal"><a href="#__codelineno-0-789">789</a></span>
+<span class="normal"><a href="#__codelineno-0-790">790</a></span>
+<span class="normal"><a href="#__codelineno-0-791">791</a></span>
+<span class="normal"><a href="#__codelineno-0-792">792</a></span>
+<span class="normal"><a href="#__codelineno-0-793">793</a></span>
+<span class="normal"><a href="#__codelineno-0-794">794</a></span>
+<span class="normal"><a href="#__codelineno-0-795">795</a></span>
+<span class="normal"><a href="#__codelineno-0-796">796</a></span>
+<span class="normal"><a href="#__codelineno-0-797">797</a></span>
+<span class="normal"><a href="#__codelineno-0-798">798</a></span>
+<span class="normal"><a href="#__codelineno-0-799">799</a></span>
+<span class="normal"><a href="#__codelineno-0-800">800</a></span>
+<span class="normal"><a href="#__codelineno-0-801">801</a></span>
+<span class="normal"><a href="#__codelineno-0-802">802</a></span>
+<span class="normal"><a href="#__codelineno-0-803">803</a></span>
+<span class="normal"><a href="#__codelineno-0-804">804</a></span>
+<span class="normal"><a href="#__codelineno-0-805">805</a></span>
+<span class="normal"><a href="#__codelineno-0-806">806</a></span>
+<span class="normal"><a href="#__codelineno-0-807">807</a></span>
+<span class="normal"><a href="#__codelineno-0-808">808</a></span>
+<span class="normal"><a href="#__codelineno-0-809">809</a></span>
+<span class="normal"><a href="#__codelineno-0-810">810</a></span>
+<span class="normal"><a href="#__codelineno-0-811">811</a></span>
+<span class="normal"><a href="#__codelineno-0-812">812</a></span>
+<span class="normal"><a href="#__codelineno-0-813">813</a></span>
+<span class="normal"><a href="#__codelineno-0-814">814</a></span>
+<span class="normal"><a href="#__codelineno-0-815">815</a></span>
+<span class="normal"><a href="#__codelineno-0-816">816</a></span>
+<span class="normal"><a href="#__codelineno-0-817">817</a></span>
+<span class="normal"><a href="#__codelineno-0-818">818</a></span>
+<span class="normal"><a href="#__codelineno-0-819">819</a></span>
+<span class="normal"><a href="#__codelineno-0-820">820</a></span>
+<span class="normal"><a href="#__codelineno-0-821">821</a></span>
+<span class="normal"><a href="#__codelineno-0-822">822</a></span></pre></div></td><td class="code"><div><pre><span></span><code><a id="__codelineno-0-785" name="__codelineno-0-785"></a><span class="k">def</span><span class="w"> </span><span class="nf">run</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+<a id="__codelineno-0-786" name="__codelineno-0-786"></a><span class="w">    </span><span class="sd">"""Walk Device.objects.all() and write one CoverageSnapshot per device."""</span>
+<a id="__codelineno-0-787" name="__codelineno-0-787"></a>    <span class="kn">from</span><span class="w"> </span><span class="nn">nautobot_contract_models.helpers</span><span class="w"> </span><span class="kn">import</span> <span class="n">has_active_coverage</span>
+<a id="__codelineno-0-788" name="__codelineno-0-788"></a>    <span class="kn">from</span><span class="w"> </span><span class="nn">nautobot_contract_models.models</span><span class="w"> </span><span class="kn">import</span> <span class="n">CoverageSnapshot</span>
+<a id="__codelineno-0-789" name="__codelineno-0-789"></a>
+<a id="__codelineno-0-790" name="__codelineno-0-790"></a>    <span class="n">today</span> <span class="o">=</span> <span class="n">date</span><span class="o">.</span><span class="n">today</span><span class="p">()</span>
+<a id="__codelineno-0-791" name="__codelineno-0-791"></a>    <span class="c1"># select_related the ancestors has_active_coverage walks so we</span>
+<a id="__codelineno-0-792" name="__codelineno-0-792"></a>    <span class="c1"># don't N+1 on tenant/location/rack lookups per device.</span>
+<a id="__codelineno-0-793" name="__codelineno-0-793"></a>    <span class="n">devices</span> <span class="o">=</span> <span class="n">Device</span><span class="o">.</span><span class="n">objects</span><span class="o">.</span><span class="n">select_related</span><span class="p">(</span><span class="s2">"location"</span><span class="p">,</span> <span class="s2">"tenant"</span><span class="p">,</span> <span class="s2">"rack"</span><span class="p">)</span><span class="o">.</span><span class="n">iterator</span><span class="p">()</span>
+<a id="__codelineno-0-794" name="__codelineno-0-794"></a>
+<a id="__codelineno-0-795" name="__codelineno-0-795"></a>    <span class="n">covered_count</span> <span class="o">=</span> <span class="mi">0</span>
+<a id="__codelineno-0-796" name="__codelineno-0-796"></a>    <span class="n">uncovered_count</span> <span class="o">=</span> <span class="mi">0</span>
+<a id="__codelineno-0-797" name="__codelineno-0-797"></a>    <span class="k">for</span> <span class="n">device</span> <span class="ow">in</span> <span class="n">devices</span><span class="p">:</span>
+<a id="__codelineno-0-798" name="__codelineno-0-798"></a>        <span class="n">covered</span> <span class="o">=</span> <span class="n">has_active_coverage</span><span class="p">(</span><span class="n">device</span><span class="p">,</span> <span class="n">on_date</span><span class="o">=</span><span class="n">today</span><span class="p">)</span>
+<a id="__codelineno-0-799" name="__codelineno-0-799"></a>        <span class="n">CoverageSnapshot</span><span class="o">.</span><span class="n">objects</span><span class="o">.</span><span class="n">update_or_create</span><span class="p">(</span>
+<a id="__codelineno-0-800" name="__codelineno-0-800"></a>            <span class="n">snapshot_date</span><span class="o">=</span><span class="n">today</span><span class="p">,</span>
+<a id="__codelineno-0-801" name="__codelineno-0-801"></a>            <span class="n">device</span><span class="o">=</span><span class="n">device</span><span class="p">,</span>
+<a id="__codelineno-0-802" name="__codelineno-0-802"></a>            <span class="n">defaults</span><span class="o">=</span><span class="p">{</span><span class="s2">"was_covered"</span><span class="p">:</span> <span class="n">covered</span><span class="p">},</span>
+<a id="__codelineno-0-803" name="__codelineno-0-803"></a>        <span class="p">)</span>
+<a id="__codelineno-0-804" name="__codelineno-0-804"></a>        <span class="k">if</span> <span class="n">covered</span><span class="p">:</span>
+<a id="__codelineno-0-805" name="__codelineno-0-805"></a>            <span class="n">covered_count</span> <span class="o">+=</span> <span class="mi">1</span>
+<a id="__codelineno-0-806" name="__codelineno-0-806"></a>        <span class="k">else</span><span class="p">:</span>
+<a id="__codelineno-0-807" name="__codelineno-0-807"></a>            <span class="n">uncovered_count</span> <span class="o">+=</span> <span class="mi">1</span>
+<a id="__codelineno-0-808" name="__codelineno-0-808"></a>
+<a id="__codelineno-0-809" name="__codelineno-0-809"></a>    <span class="n">total</span> <span class="o">=</span> <span class="n">covered_count</span> <span class="o">+</span> <span class="n">uncovered_count</span>
+<a id="__codelineno-0-810" name="__codelineno-0-810"></a>    <span class="bp">self</span><span class="o">.</span><span class="n">logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span>
+<a id="__codelineno-0-811" name="__codelineno-0-811"></a>        <span class="s2">"Coverage snapshot for </span><span class="si">%s</span><span class="s2">: </span><span class="si">%d</span><span class="s2"> devices total — </span><span class="si">%d</span><span class="s2"> covered, </span><span class="si">%d</span><span class="s2"> uncovered."</span><span class="p">,</span>
+<a id="__codelineno-0-812" name="__codelineno-0-812"></a>        <span class="n">today</span><span class="p">,</span>
+<a id="__codelineno-0-813" name="__codelineno-0-813"></a>        <span class="n">total</span><span class="p">,</span>
+<a id="__codelineno-0-814" name="__codelineno-0-814"></a>        <span class="n">covered_count</span><span class="p">,</span>
+<a id="__codelineno-0-815" name="__codelineno-0-815"></a>        <span class="n">uncovered_count</span><span class="p">,</span>
+<a id="__codelineno-0-816" name="__codelineno-0-816"></a>    <span class="p">)</span>
+<a id="__codelineno-0-817" name="__codelineno-0-817"></a>    <span class="k">return</span> <span class="p">{</span>
+<a id="__codelineno-0-818" name="__codelineno-0-818"></a>        <span class="s2">"snapshot_date"</span><span class="p">:</span> <span class="n">today</span><span class="o">.</span><span class="n">isoformat</span><span class="p">(),</span>
+<a id="__codelineno-0-819" name="__codelineno-0-819"></a>        <span class="s2">"devices_total"</span><span class="p">:</span> <span class="n">total</span><span class="p">,</span>
+<a id="__codelineno-0-820" name="__codelineno-0-820"></a>        <span class="s2">"devices_covered"</span><span class="p">:</span> <span class="n">covered_count</span><span class="p">,</span>
+<a id="__codelineno-0-821" name="__codelineno-0-821"></a>        <span class="s2">"devices_uncovered"</span><span class="p">:</span> <span class="n">uncovered_count</span><span class="p">,</span>
+<a id="__codelineno-0-822" name="__codelineno-0-822"></a>    <span class="p">}</span>
 </code></pre></div></td></tr></tbody></table></div>
             </details>
     </div>

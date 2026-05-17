@@ -29,6 +29,16 @@ def _renewal_window_days():
     return int(settings.PLUGINS_CONFIG.get("nautobot_contract_models", {}).get("renewal_window_days", 60))
 
 
+def _vendor_concentration_threshold_pct():
+    """Read the configured concentration-risk threshold (default 50% → 0.5 fraction)."""
+    raw = settings.PLUGINS_CONFIG.get("nautobot_contract_models", {}).get("vendor_concentration_threshold_pct", 50)
+    try:
+        pct = max(0, min(100, int(raw)))
+    except (TypeError, ValueError):
+        pct = 50
+    return Decimal(pct) / Decimal("100")
+
+
 def get_upcoming_renewals(request):
     """Return contracts expiring within the configured window, ordered by soonest.
 
@@ -83,6 +93,37 @@ def get_cost_summary(request):
     }
 
 
+def get_vendor_concentration(request):
+    """Per-currency top-vendor share, with a threshold-trip flag per row.
+
+    Phase 20: composes the cost.vendor_concentration helper and decorates
+    each row with whether the top_vendor_pct exceeds the configured
+    threshold (default 50%, configurable via PLUGINS_CONFIG).
+    """
+    threshold = _vendor_concentration_threshold_pct()
+    rows = []
+    for currency, data in cost.vendor_concentration().items():
+        pct_fraction = data["top_vendor_pct"]
+        rows.append(
+            {
+                "currency": currency,
+                "top_vendor": data["top_vendor"],
+                "top_vendor_pct": pct_fraction,
+                # Pre-format the percent string so the template doesn't have to
+                # multiply Decimals (templates can't do that without filters
+                # the project doesn't ship).
+                "top_vendor_pct_label": f"{int(pct_fraction * 100)}%",
+                "total_burn": data["total_burn"],
+                "flagged": pct_fraction >= threshold,
+            }
+        )
+    rows.sort(key=lambda r: r["top_vendor_pct"], reverse=True)
+    return {
+        "rows": rows,
+        "threshold_pct_label": f"{int(threshold * 100)}%",
+    }
+
+
 def get_renewal_forecast(request):
     """Build the Renewal Forecast panel context.
 
@@ -130,6 +171,17 @@ layout = (
         # per render rather than three.
         custom_data={"cost_summary": get_cost_summary},
         custom_template="cost_summary_panel.html",
+    ),
+    HomePagePanel(
+        # Phase 20: vendor-concentration risk slot, between Cost Summary
+        # (which shows raw spend) and Renewal Forecast (which shows future
+        # spend). Operators see "you spend a lot" first, "you depend on
+        # one vendor" right next to it.
+        name="Vendor Concentration",
+        weight=1525,
+        permissions=["nautobot_contract_models.view_contract"],
+        custom_data={"vendor_concentration": get_vendor_concentration},
+        custom_template="vendor_concentration_panel.html",
     ),
     HomePagePanel(
         name="Renewal Forecast",

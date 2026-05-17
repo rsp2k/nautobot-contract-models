@@ -13,6 +13,14 @@ from nautobot.core.settings_funcs import is_truthy  # noqa: F401
 
 DEBUG = is_truthy(os.environ.get("NAUTOBOT_DEBUG", "true"))
 
+# Append the Nautobot test client's default Host header so `self.client.get(...)`
+# in unit tests doesn't get bounced as Bad Request by ALLOWED_HOSTS. The base
+# NAUTOBOT_ALLOWED_HOSTS comes from the env var (production hostnames); the test
+# client uses "nautobot.example.com" per NautobotTestClient.__init__. Without
+# this, every self.client.get hits a 400. Safe to leave in production configs:
+# the example.com TLD is reserved (RFC 2606), so no real host can match it.
+ALLOWED_HOSTS = list(globals().get("ALLOWED_HOSTS", [])) + ["nautobot.example.com"]
+
 PLUGINS = [
     "nautobot_contract_models",
     # DLC is installed alongside us in the dev stack so we exercise the

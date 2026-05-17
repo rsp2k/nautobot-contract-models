@@ -1,0 +1,128 @@
+{% extends 'base.html' %}
+{% comment %}
+iCal Token Management — Phase 20.
+
+One-page UI for the per-user iCal access token. Operators paste
+``subscription_url`` into their calendar app (Outlook → Add Calendar →
+Subscribe from web; Google Calendar → Other calendars → From URL;
+iCloud → File → New Calendar Subscription) and contract renewal dates
+appear as all-day events in their personal calendar.
+
+Why a separate page (not a profile-extension):
+    Nautobot has no first-class user-profile extension hook in 3.1.1.
+    A standalone URL is the cleanest pattern; it's reachable from the
+    contracts nav and bookmarkable.
+
+Context (from views/ical.py ICalTokenManageView):
+    token              — ICalAccessToken instance for the current user
+    subscription_url   — absolute URL including ?token=<secret>
+    ical_url           — absolute URL of the feed without a token (session-auth path)
+    created            — True if the token was auto-created on this request
+    just_regenerated   — True if a POST action just rotated/deleted-and-recreated
+{% endcomment %}
+
+{% block title %}iCal Subscription{% endblock %}
+
+{% block content %}
+<div class="container mt-4">
+    <h1>iCal Subscription</h1>
+    <p class="text-muted">
+        Subscribe to a calendar feed of contract renewal dates so they appear in Outlook, Google Calendar, iCloud, or any other client that speaks
+        <a href="https://datatracker.ietf.org/doc/html/rfc5545" target="_blank" rel="noopener">RFC 5545</a>.
+    </p>
+
+    {% if just_regenerated %}
+        <div class="alert alert-success" role="alert">
+            <strong>Token regenerated.</strong> Old subscriptions will stop working. Update your calendar app with the new URL below.
+        </div>
+    {% elif created %}
+        <div class="alert alert-info" role="alert">
+            <strong>Token created.</strong> Your first iCal subscription URL is ready below.
+        </div>
+    {% endif %}
+
+    <div class="card mt-3">
+        <div class="card-header">
+            <strong>Your subscription URL</strong>
+        </div>
+        <div class="card-body">
+            <p>Paste this URL into your calendar client's "Subscribe to calendar" dialog. Keep it private — anyone with this URL can see your contracts' end dates.</p>
+            <div class="form-group">
+                <label for="subscription-url-input" class="visually-hidden">Subscription URL</label>
+                <input id="subscription-url-input" type="text" class="form-control" value="{{ subscription_url }}" readonly aria-label="Subscription URL">
+            </div>
+            <button type="button" class="btn btn-primary" id="copy-subscription-url">Copy URL</button>
+            <span id="copy-feedback" class="ml-2 text-success" aria-live="polite" style="display:none;">Copied!</span>
+        </div>
+    </div>
+
+    <div class="card mt-3">
+        <div class="card-header">
+            <strong>Token administration</strong>
+        </div>
+        <div class="card-body">
+            <dl class="row">
+                <dt class="col-sm-3">Token ID</dt>
+                <dd class="col-sm-9"><code>{{ token.id }}</code></dd>
+                <dt class="col-sm-3">Created</dt>
+                <dd class="col-sm-9">{{ token.created }}</dd>
+                <dt class="col-sm-3">Last used</dt>
+                <dd class="col-sm-9">{% if token.last_used_at %}{{ token.last_used_at }}{% else %}<em>never</em>{% endif %}</dd>
+            </dl>
+            <hr>
+            <form method="post" class="d-inline">
+                {% csrf_token %}
+                <input type="hidden" name="action" value="regenerate">
+                <button type="submit" class="btn btn-warning"
+                        onclick="return confirm('Regenerating invalidates the current subscription URL. Continue?')">
+                    Regenerate token
+                </button>
+            </form>
+            <p class="text-muted mt-2">
+                Regenerating rotates the secret. Any calendar clients using the old URL will stop syncing until you update them.
+            </p>
+        </div>
+    </div>
+
+    <div class="card mt-3">
+        <div class="card-header">
+            <strong>Alternative: session-authenticated URL</strong>
+        </div>
+        <div class="card-body">
+            <p>
+                If your calendar client carries Django session cookies (rare), you can subscribe without the token:
+                <a href="{{ ical_url }}"><code>{{ ical_url }}</code></a>.
+            </p>
+            <p class="text-muted">
+                Most calendar apps don't carry browser cookies, so the token URL above is the recommended path.
+            </p>
+        </div>
+    </div>
+</div>
+
+<script>
+(function () {
+    var btn = document.getElementById("copy-subscription-url");
+    var input = document.getElementById("subscription-url-input");
+    var feedback = document.getElementById("copy-feedback");
+    if (!btn || !input || !feedback) { return; }
+    btn.addEventListener("click", function () {
+        input.select();
+        input.setSelectionRange(0, 99999);
+        var ok = false;
+        try {
+            if (navigator.clipboard && navigator.clipboard.writeText) {
+                navigator.clipboard.writeText(input.value);
+                ok = true;
+            } else {
+                ok = document.execCommand("copy");
+            }
+        } catch (e) { ok = false; }
+        if (ok) {
+            feedback.style.display = "inline";
+            setTimeout(function () { feedback.style.display = "none"; }, 2000);
+        }
+    });
+})();
+</script>
+{% endblock %}
