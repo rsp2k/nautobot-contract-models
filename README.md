@@ -13,6 +13,19 @@ Inspired by [netbox-contract](https://github.com/mlebreuil/netbox-contract), but
 
 Tested against **Nautobot 3.1.1**. CalVer versioning (`YYYY.M.D`) — see `pyproject.toml` for the version that was current when you cloned.
 
+## Coexistence with `nautobot-app-device-lifecycle` (DLM)
+
+Both plugins ship a "Contracts" surface; DLM's `ContractLCM` is structurally simpler than our `Contract`. Since **v2026.5.11** the two plugins coexist without colliding on Django's `Status` reverse accessor. **v2026.5.12** adds two opt-in features so operators can make our `Contract` *the* canonical contracts surface:
+
+- **Migration**: A one-way idempotent `Migrate ContractLCM → Contract` Job copies every `ContractLCM` row (including its device M2M, converted to our polymorphic `ContractAssignment`) into our model.
+- **Nav hide**: The `hide_dlm_contracts_nav` PLUGINS_CONFIG flag (default `False`) removes DLM's `Contracts` sidebar group when both apps are installed.
+
+**What this does NOT do.** Neither feature disables DLM. With the flag set and the migration complete, DLM's `ContractLCM` table still exists, its URLs (`/plugins/nautobot-device-lifecycle-mgmt/contract/…`) still resolve, its REST API still serves, and its `Hardware Notices` / `Software Lifecycle` / `Reports` nav groups are untouched. We only hide one nav group and *copy* the contract rows — never delete, never block, never overwrite. Scripts that hit DLM's contract endpoints keep working.
+
+If you don't want either feature, simply don't enable them. Both plugins coexist fine with two parallel "Contracts" surfaces — that's the v2026.5.11 baseline.
+
+Full step-by-step walkthrough with screenshots: **[Coexistence with `nautobot-app-device-lifecycle`](https://nautobot-contract-models.readthedocs.io/en/latest/admin/dlm_coexistence/)**.
+
 ## Models
 
 | Model | Role | Lifecycle |
@@ -70,16 +83,7 @@ The renewal-check Job ships **disabled** (Nautobot 3.x default for newly-discove
 | Key | Type | Default | Effect |
 |---|---|---|---|
 | `renewal_window_days` | int | `60` | Window in days for the renewal-alert Job's default + the homepage "Upcoming Renewals" panel |
-| `hide_dlm_contracts_nav` | bool | `False` | When `True` AND `nautobot-app-device-lifecycle-mgmt` is installed, removes DLM's `Contracts` sidebar group so operators see one canonical contracts surface (ours). DLM's other features remain intact. See [docs/admin/install.md → Coexistence](https://nautobot-contract-models.readthedocs.io/en/latest/admin/install/#coexistence-with-nautobot-app-device-lifecycle). |
-
-## Coexistence with `nautobot-app-device-lifecycle`
-
-Both plugins ship a "Contracts" surface; theirs (`ContractLCM`) is structurally simpler than ours. Since v2026.5.11 the two coexist without colliding on Django's `Status` reverse accessor. v2026.5.12 adds:
-
-- A one-way idempotent **Migrate ContractLCM → Contract** Job that copies every `ContractLCM` (and its device M2M, converted to our polymorphic `ContractAssignment`) into our model.
-- The opt-in `hide_dlm_contracts_nav` flag (see above).
-
-Full operator runbook: [docs/admin/install.md → Coexistence with nautobot-app-device-lifecycle](https://nautobot-contract-models.readthedocs.io/en/latest/admin/install/#coexistence-with-nautobot-app-device-lifecycle).
+| `hide_dlm_contracts_nav` | bool | `False` | When `True` AND `nautobot-app-device-lifecycle-mgmt` is installed, removes DLM's `Contracts` sidebar group. DLM's URLs, REST API, and other nav groups (Hardware Notices, Software Lifecycle, Reports) are untouched. See the [Coexistence section above](#coexistence-with-nautobot-app-device-lifecycle-dlm) for full context. |
 
 ## REST API
 

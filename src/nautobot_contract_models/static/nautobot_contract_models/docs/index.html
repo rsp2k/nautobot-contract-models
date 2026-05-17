@@ -455,6 +455,17 @@
 </li>
       
         <li class="md-nav__item">
+  <a href="#coexistence-with-nautobot-app-device-lifecycle-dlm" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Coexistence with nautobot-app-device-lifecycle (DLM)
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
   <a href="#models" class="md-nav__link">
     <span class="md-ellipsis">
       
@@ -498,17 +509,6 @@
     <span class="md-ellipsis">
       
         Configuration via PLUGINS_CONFIG
-      
-    </span>
-  </a>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#coexistence-with-nautobot-app-device-lifecycle" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Coexistence with nautobot-app-device-lifecycle
       
     </span>
   </a>
@@ -2020,6 +2020,17 @@
 </li>
       
         <li class="md-nav__item">
+  <a href="#coexistence-with-nautobot-app-device-lifecycle-dlm" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Coexistence with nautobot-app-device-lifecycle (DLM)
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
   <a href="#models" class="md-nav__link">
     <span class="md-ellipsis">
       
@@ -2063,17 +2074,6 @@
     <span class="md-ellipsis">
       
         Configuration via PLUGINS_CONFIG
-      
-    </span>
-  </a>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#coexistence-with-nautobot-app-device-lifecycle" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Coexistence with nautobot-app-device-lifecycle
       
     </span>
   </a>
@@ -2297,6 +2297,15 @@
 <p>Inspired by <a href="https://github.com/mlebreuil/netbox-contract">netbox-contract</a>, but re-architected for Nautobot 3.x conventions: <code>PrimaryModel</code>, the Status framework, <code>Tenant</code>, ChangeLog, the Job framework, and the modern <code>NautobotUIViewSet</code> / <code>ObjectDetailContent</code> UI Component Framework.</p>
 <h2 id="status">Status<a class="headerlink" href="#status" title="Permanent link">&para;</a></h2>
 <p>Tested against <strong>Nautobot 3.1.1</strong>. CalVer versioning (<code>YYYY.M.D</code>) — see <code>pyproject.toml</code> for the version that was current when you cloned.</p>
+<h2 id="coexistence-with-nautobot-app-device-lifecycle-dlm">Coexistence with <code>nautobot-app-device-lifecycle</code> (DLM)<a class="headerlink" href="#coexistence-with-nautobot-app-device-lifecycle-dlm" title="Permanent link">&para;</a></h2>
+<p>Both plugins ship a "Contracts" surface; DLM's <code>ContractLCM</code> is structurally simpler than our <code>Contract</code>. Since <strong>v2026.5.11</strong> the two plugins coexist without colliding on Django's <code>Status</code> reverse accessor. <strong>v2026.5.12</strong> adds two opt-in features so operators can make our <code>Contract</code> <em>the</em> canonical contracts surface:</p>
+<ul>
+<li><strong>Migration</strong>: A one-way idempotent <code>Migrate ContractLCM → Contract</code> Job copies every <code>ContractLCM</code> row (including its device M2M, converted to our polymorphic <code>ContractAssignment</code>) into our model.</li>
+<li><strong>Nav hide</strong>: The <code>hide_dlm_contracts_nav</code> PLUGINS_CONFIG flag (default <code>False</code>) removes DLM's <code>Contracts</code> sidebar group when both apps are installed.</li>
+</ul>
+<p><strong>What this does NOT do.</strong> Neither feature disables DLM. With the flag set and the migration complete, DLM's <code>ContractLCM</code> table still exists, its URLs (<code>/plugins/nautobot-device-lifecycle-mgmt/contract/…</code>) still resolve, its REST API still serves, and its <code>Hardware Notices</code> / <code>Software Lifecycle</code> / <code>Reports</code> nav groups are untouched. We only hide one nav group and <em>copy</em> the contract rows — never delete, never block, never overwrite. Scripts that hit DLM's contract endpoints keep working.</p>
+<p>If you don't want either feature, simply don't enable them. Both plugins coexist fine with two parallel "Contracts" surfaces — that's the v2026.5.11 baseline.</p>
+<p>Full step-by-step walkthrough with screenshots: <strong><a href="https://nautobot-contract-models.readthedocs.io/en/latest/admin/dlm_coexistence/">Coexistence with <code>nautobot-app-device-lifecycle</code></a></strong>.</p>
 <h2 id="models">Models<a class="headerlink" href="#models" title="Permanent link">&para;</a></h2>
 <table>
 <thead>
@@ -2388,17 +2397,10 @@
 <td><code>hide_dlm_contracts_nav</code></td>
 <td>bool</td>
 <td><code>False</code></td>
-<td>When <code>True</code> AND <code>nautobot-app-device-lifecycle-mgmt</code> is installed, removes DLM's <code>Contracts</code> sidebar group so operators see one canonical contracts surface (ours). DLM's other features remain intact. See <a href="https://nautobot-contract-models.readthedocs.io/en/latest/admin/install/#coexistence-with-nautobot-app-device-lifecycle">docs/admin/install.md → Coexistence</a>.</td>
+<td>When <code>True</code> AND <code>nautobot-app-device-lifecycle-mgmt</code> is installed, removes DLM's <code>Contracts</code> sidebar group. DLM's URLs, REST API, and other nav groups (Hardware Notices, Software Lifecycle, Reports) are untouched. See the <a href="#coexistence-with-nautobot-app-device-lifecycle-dlm">Coexistence section above</a> for full context.</td>
 </tr>
 </tbody>
 </table>
-<h2 id="coexistence-with-nautobot-app-device-lifecycle">Coexistence with <code>nautobot-app-device-lifecycle</code><a class="headerlink" href="#coexistence-with-nautobot-app-device-lifecycle" title="Permanent link">&para;</a></h2>
-<p>Both plugins ship a "Contracts" surface; theirs (<code>ContractLCM</code>) is structurally simpler than ours. Since v2026.5.11 the two coexist without colliding on Django's <code>Status</code> reverse accessor. v2026.5.12 adds:</p>
-<ul>
-<li>A one-way idempotent <strong>Migrate ContractLCM → Contract</strong> Job that copies every <code>ContractLCM</code> (and its device M2M, converted to our polymorphic <code>ContractAssignment</code>) into our model.</li>
-<li>The opt-in <code>hide_dlm_contracts_nav</code> flag (see above).</li>
-</ul>
-<p>Full operator runbook: <a href="https://nautobot-contract-models.readthedocs.io/en/latest/admin/install/#coexistence-with-nautobot-app-device-lifecycle">docs/admin/install.md → Coexistence with nautobot-app-device-lifecycle</a>.</p>
 <h2 id="rest-api">REST API<a class="headerlink" href="#rest-api" title="Permanent link">&para;</a></h2>
 <p>The plugin exposes a full REST API under <code>/api/plugins/contracts/</code>. Authentication is the standard Nautobot token; pass via <code>Authorization: Token &lt;key&gt;</code> header.</p>
 <div class="highlight"><pre><span></span><code><a id="__codelineno-3-1" name="__codelineno-3-1" href="#__codelineno-3-1"></a><span class="nv">TOKEN</span><span class="o">=</span>...
