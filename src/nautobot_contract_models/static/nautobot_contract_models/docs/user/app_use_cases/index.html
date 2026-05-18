@@ -657,6 +657,50 @@
   
 </li>
       
+        <li class="md-nav__item">
+  <a href="#ical-calendar-subscription" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        iCal Calendar Subscription
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#device-detail-active-contracts-panel" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Device-detail Active Contracts panel
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#vendor-concentration-risk" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Vendor Concentration Risk
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#coverage-drift-report" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Coverage Drift report
+      
+    </span>
+  </a>
+  
+</li>
+      
     </ul>
   
 </nav>
@@ -1915,6 +1959,50 @@
   
 </li>
       
+        <li class="md-nav__item">
+  <a href="#ical-calendar-subscription" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        iCal Calendar Subscription
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#device-detail-active-contracts-panel" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Device-detail Active Contracts panel
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#vendor-concentration-risk" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Vendor Concentration Risk
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#coverage-drift-report" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Coverage Drift report
+      
+    </span>
+  </a>
+  
+</li>
+      
     </ul>
   
 </nav>
@@ -1949,7 +2037,7 @@
 
 
 <h1 id="using-the-app">Using the App<a class="headerlink" href="#using-the-app" title="Permanent link">¶</a></h1>
-<p>This page walks through the four operator-facing surfaces the plugin contributes beyond the standard CRUD list/detail views.</p>
+<p>This page walks through the operator-facing surfaces the plugin contributes beyond the standard CRUD list/detail views.</p>
 <h2 id="action-required">Action Required<a class="headerlink" href="#action-required" title="Permanent link">¶</a></h2>
 <p><code>/plugins/contracts/reports/action-required/</code> is a single page that answers "what do I need to do this week to avoid a renewal surprise?".</p>
 <p>Contracts are bucketed into three priority tiers driven by a centralized rubric in <code>priority.action_priority()</code>:</p>
@@ -1992,6 +2080,36 @@
 <li><strong>Find devices without contract coverage</strong> Job that walks every Device and writes one <code>WARNING</code> log line per uncovered device, plus an INFO summary</li>
 </ul>
 <p>The transitive coverage helper (<code>helpers.coverage_assignments</code>) walks <code>(self, tenant, location, rack, device)</code> ancestry. A Tenant-level contract assignment automatically covers every Device under that Tenant — operators don't have to attach contracts to individual devices.</p>
+<h2 id="ical-calendar-subscription">iCal Calendar Subscription<a class="headerlink" href="#ical-calendar-subscription" title="Permanent link">¶</a></h2>
+<p><code>/plugins/contracts/ical-token/</code> generates a per-user URL that subscribes operators' personal calendar apps (Outlook, Google Calendar, iCloud, anything that speaks RFC 5545) to contract end dates. Renewal deadlines appear next to actual meetings — no more "did the SmartNet contract lapse last week?" emails.</p>
+<p><a class="glightbox" data-type="image" data-width="100%" data-height="auto" href="../../images/ical-token-page.png" data-title="iCal Token Page" data-desc-position="bottom"><img alt="iCal Token Page" src="../../images/ical-token-page.png"></a></p>
+<p>The page auto-creates a 32-character URL-safe token on first visit and shows the full subscription URL with a copy-to-clipboard button. Token administration has a regenerate button (revokes the previous URL and rotates the secret). The feed includes a VEVENT per active contract's <code>end_date</code>, plus a VEVENT for <code>start_date</code> when the contract hasn't yet begun (newly-signed contracts show as upcoming events). Date-only events — no timezone gymnastics; all-day in every calendar client.</p>
+<p><strong>Auth</strong>: session OR <code>?token=&lt;secret&gt;</code> URL param. Calendar apps that don't carry browser cookies (which is most of them) use the token URL. The token grants read-only access to contract end dates — it does NOT grant general account access. Treat the URL like a password; regenerate to revoke.</p>
+<h2 id="device-detail-active-contracts-panel">Device-detail Active Contracts panel<a class="headerlink" href="#device-detail-active-contracts-panel" title="Permanent link">¶</a></h2>
+<p>Every Device detail page in Nautobot gets an <strong>Active Contracts</strong> side panel listing the contracts covering that device — direct <em>or</em> transitive (via Tenant, Location, Rack, parent Device).</p>
+<p><a class="glightbox" data-type="image" data-width="100%" data-height="auto" href="../../images/device-active-contracts.png" data-title="Device-detail Active Contracts panel showing one tenant-covered contract and one direct" data-desc-position="bottom"><img alt="Device-detail Active Contracts panel showing one tenant-covered contract and one direct" src="../../images/device-active-contracts.png"></a></p>
+<p>The "Source" column makes the coverage path explicit:</p>
+<ul>
+<li><code>direct</code> — <code>ContractAssignment.content_type == dcim.device, object_id == &lt;this device&gt;</code></li>
+<li><code>via Tenant: ACME Networks-P20</code> — assignment is on the device's tenant</li>
+<li><code>via Location: NYC-HQ</code> — assignment is on the device's location</li>
+</ul>
+<p>Operators investigating a Device issue see contract coverage <em>where they already are</em>, without leaving the page. The panel cap is 10 contracts; operators with more drill into the full Contracts list filtered by device.</p>
+<h2 id="vendor-concentration-risk">Vendor Concentration Risk<a class="headerlink" href="#vendor-concentration-risk" title="Permanent link">¶</a></h2>
+<p>A home dashboard panel at weight 1525 (between Cost Summary and Renewal Forecast) showing per-currency top-vendor share. Any currency where one vendor exceeds the configured threshold (default 50%, set via <code>PLUGINS_CONFIG['nautobot_contract_models']['vendor_concentration_threshold_pct']</code>) gets an amber <strong>risk</strong> badge.</p>
+<p><a class="glightbox" data-type="image" data-width="100%" data-height="auto" href="../../images/vendor-concentration-flagged.png" data-title="Vendor Concentration panel flagging Cisco at 53% of USD burn" data-desc-position="bottom"><img alt="Vendor Concentration panel flagging Cisco at 53% of USD burn" src="../../images/vendor-concentration-flagged.png"></a></p>
+<p>Math is straightforward: <code>top_vendor_total_monthly_spend / total_monthly_burn_for_currency</code> per ISO currency code. Per-currency by design — a vendor concentrated in USD spend is genuinely risky even if EUR spend is diversified across four others. Currencies with zero burn don't appear in the panel.</p>
+<p>Operators get a procurement signal at a glance: "you depend heavily on one vendor in <currency>." Adjust the threshold downward (e.g. 33%) for stricter procurement governance, or set it to 100 to effectively disable the flag while keeping the panel visible.</currency></p>
+<h2 id="coverage-drift-report">Coverage Drift report<a class="headerlink" href="#coverage-drift-report" title="Permanent link">¶</a></h2>
+<p><code>/plugins/contracts/reports/coverage-drift/</code> surfaces devices that gained or lost contract coverage in a configurable window (7 / 30 / 90 / 180 / 365 days, default 30). Operational regression signal: a contract lapsed, a device got reassigned out from under a contract's coverage path, a renewal didn't transfer cleanly.</p>
+<p><a class="glightbox" data-type="image" data-width="100%" data-height="auto" href="../../images/coverage-drift-report.png" data-title="Coverage Drift report showing one lost-coverage device and one newly-covered device" data-desc-position="bottom"><img alt="Coverage Drift report showing one lost-coverage device and one newly-covered device" src="../../images/coverage-drift-report.png"></a></p>
+<p>The view diffs the latest <code>CoverageSnapshot</code> row set against the most recent set on-or-before <code>today - window_days</code>. Two sections:</p>
+<ul>
+<li><strong>Lost coverage</strong> (red rail): devices that were covered N days ago and aren't now. Click through to investigate.</li>
+<li><strong>Newly covered</strong> (green rail): inverse — sanity check that new contracts landed against the expected devices.</li>
+</ul>
+<p>Devices that didn't exist in the baseline snapshot are skipped (no comparison point), so adding brand-new devices doesn't generate noise.</p>
+<p><strong>Setup</strong>: enable the <strong>Capture coverage snapshot</strong> Job (Apps → Jobs → Contracts) and schedule it weekly alongside the cost-history snapshot. Each run writes one <code>CoverageSnapshot</code> per Device for today's date. With no snapshot history, the report renders an instructional empty state pointing at the Job.</p>
 
 
 
